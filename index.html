@@ -3,27 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Nota Kulakan</title>
+  <title>Form Nota Kulakan & Eceran Mikro</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background-color: #f1f5f9; padding: 15px; color: #334155; }
     .box { background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
-    .title { font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+    .title { font-weight: bold; font-size: 15px; margin-bottom: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
     label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #475569; }
-    input, select, textarea { width: 100%; padding: 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 5px; background: #fff; }
-    .item-card { background: #f8fafc; border: 1px solid #94a3b8; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    input, select, textarea { width: 100%; padding: 7px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 5px; background: #fff; }
+    .item-card { background: #f8fafc; border: 1px solid #94a3b8; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
     .btn { display: inline-block; padding: 10px 15px; font-size: 13px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; text-align: center; }
     .btn-tambah { background: #4338ca; color: white; width: 100%; margin-top: 5px; font-size: 14px; }
     .btn-hapus { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; float: right; border-radius: 4px; }
     .btn-simpan { background: #10b981; color: white; width: 100%; font-size: 16px; padding: 12px; margin-top: 10px; }
     .btn-reset { background: #94a3b8; color: white; padding: 12px; margin-top: 10px; }
     .total-display { background: #0f172a; color: #38bdf8; padding: 12px; font-size: 20px; font-weight: bold; border-radius: 6px; text-align: right; }
+    .tier-box { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; margin-top: 5px; }
+    .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; color: #fff; }
   </style>
 </head>
 <body>
 
-  <h2 style="text-align: center; margin-bottom: 15px;">📋 Form Input Nota Kulakan</h2>
+  <h2 style="text-align: center; margin-bottom: 15px;">🛒 Form Kulakan & Ketengan Eceran Mikro</h2>
 
   <!-- Config GAS -->
   <div class="box" style="background: #fffbeb; border-color: #fde68a;">
@@ -47,7 +49,7 @@
         </div>
         <div>
           <label>Nama Supplier</label>
-          <input type="text" id="supplier" placeholder="Contoh: Toko Grosir">
+          <input type="text" id="supplier" placeholder="Agen / Distributor / Grosir">
         </div>
         <div>
           <label>Metode Bayar</label>
@@ -62,16 +64,16 @@
 
     <!-- Daftar Barang -->
     <div class="box">
-      <div class="title">📦 Barang Belanjaan</div>
+      <div class="title">📦 Detail Barang & Hitungan Ketengan Mikro</div>
       
       <div id="containerBarang"></div>
 
-      <button type="button" class="btn btn-tambah" id="btnTambahBarang" onclick="tambahBarang()">+ TAMBAH BARANG LAGI</button>
+      <button type="button" class="btn btn-tambah" onclick="tambahBarang()">+ TAMBAH BARANG</button>
     </div>
 
     <!-- Catatan & Total -->
     <div class="box">
-      <label>Catatan</label>
+      <label>Catatan Nota</label>
       <textarea id="catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
       <div style="margin-top: 10px;">
         <label>TOTAL NOTA BELANJA:</label>
@@ -99,55 +101,85 @@
       div.id = 'item-' + id;
       div.className = 'item-card';
 
-      div.innerHTML = 
-        '<button type="button" class="btn btn-hapus" onclick="hapusBarang(' + id + ')">🗑️ Hapus</button>' +
-        '<div style="font-weight: bold; font-size: 12px; margin-bottom: 8px; color: #4338ca;">Item #' + id + '</div>' +
+      div.innerHTML = `
+        <button type="button" class="btn btn-hapus" onclick="hapusBarang(${id})">🗑️ Hapus</button>
+        <div style="font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #4338ca;">Item #${id}</div>
         
-        '<div style="margin-bottom: 8px;">' +
-          '<label>Nama Barang</label>' +
-          '<input type="text" id="namaBarang-' + id + '" placeholder="Nama barang...">' +
-        '</div>' +
+        <div class="grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 8px;">
+          <div>
+            <label>Nama Barang</label>
+            <input type="text" id="namaBarang-${id}" placeholder="Contoh: Djarum Super 12 / Minyak Goreng Curah">
+          </div>
+          <div>
+            <label>Total Beli Nota (Rp)</label>
+            <input type="number" id="hargaBeliTotal-${id}" oninput="hitungRow(${id})" placeholder="0">
+          </div>
+        </div>
 
-        '<div class="grid" style="margin-bottom: 8px;">' +
-          '<div>' +
-            '<label>Harga Beli Nota (Rp)</label>' +
-            '<input type="number" id="hargaBeliTotal-' + id + '" oninput="hitungRow(' + id + ')" placeholder="0">' +
-          '</div>' +
-          '<div>' +
-            '<label>Qty (Dus/Pak)</label>' +
-            '<input type="number" id="qtyDus-' + id + '" oninput="hitungRow(' + id + ')" value="1" min="1">' +
-          '</div>' +
-          '<div>' +
-            '<label>Isi/Dus (Pcs)</label>' +
-            '<input type="number" id="isiPerDus-' + id + '" oninput="hitungRow(' + id + ')" value="12" min="1">' +
-          '</div>' +
-        '</div>' +
+        <!-- Input Qty Utama -->
+        <div style="background: #e0e7ff; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+          <div class="grid">
+            <div>
+              <label>Qty Beli (Dus/Bal/Slop/Karung)</label>
+              <input type="number" id="qtyUtama-${id}" oninput="hitungRow(${id})" value="1" min="1">
+            </div>
+            <div>
+              <label>Isi Kemasan per Qty Utama</label>
+              <input type="number" id="isiPerUtama-${id}" oninput="hitungRow(${id})" value="10" min="1">
+            </div>
+            <div>
+              <label>Nama Kemasan Utama</label>
+              <select id="namaKemasanUtama-${id}" onchange="hitungRow(${id})">
+                <option value="Bungkus">Bungkus (Bks)</option>
+                <option value="Kg">Kg (Kilogram)</option>
+                <option value="Liter">Liter</option>
+                <option value="Pcs">Pcs</option>
+                <option value="Botol">Botol</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-        '<div class="grid" style="background: #e2e8f0; padding: 8px; border-radius: 5px; margin-bottom: 8px;">' +
-          '<div>' +
-            '<label>Total Pcs</label>' +
-            '<input type="number" id="totalQtyPcs-' + id + '" readonly style="background: #fff; font-weight: bold;">' +
-          '</div>' +
-          '<div>' +
-            '<label>HPP / Pcs (Rp)</label>' +
-            '<input type="text" id="hppPerPcs-' + id + '" readonly style="background: #fff; font-weight: bold; color: #4338ca;">' +
-          '</div>' +
-        '</div>' +
+        <!-- LEVEL 1: UTAMA (PER BUNGKUS / PER KG) -->
+        <div class="tier-box">
+          <div style="margin-bottom: 4px;"><span class="badge" style="background:#0284c7;">HARGA UTAMA (PER BUNGKUS / PER KG)</span></div>
+          <div class="grid">
+            <div><label>Total Kemasan Utama</label><input type="number" id="totalKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold;"></div>
+            <div><label>HPP / Kemasan</label><input type="text" id="hppKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold; color:#4338ca;"></div>
+            <div><label>Margin (%)</label><input type="number" id="marginKemasanUtama-${id}" oninput="hitungRow(${id})" value="10"></div>
+            <div><label>Harga Jual / Kemasan</label><input type="number" id="jualKemasanUtama-${id}" style="background:#ecfdf5; font-weight:bold; color:#065f46;"></div>
+          </div>
+        </div>
 
-        '<div class="grid">' +
-          '<div>' +
-            '<label>Margin (%)</label>' +
-            '<input type="number" id="marginPercent-' + id + '" oninput="hitungRow(' + id + ')" value="10">' +
-          '</div>' +
-          '<div>' +
-            '<label>Rekomendasi (500)</label>' +
-            '<input type="text" id="rekomendasiJual-' + id + '" readonly style="background: #fef3c7; color: #92400e; font-weight: bold;">' +
-          '</div>' +
-          '<div>' +
-            '<label>Harga Jual Final (Rp)</label>' +
-            '<input type="number" id="hargaJualFinal-' + id + '" placeholder="0" style="background: #ecfdf5; font-weight: bold; color: #065f46;">' +
-          '</div>' +
-        '</div>';
+        <!-- LEVEL 2: KETENGAN MIKRO (PER BATANG / PER 1/4 KG / PER GRAM) -->
+        <div class="tier-box">
+          <div style="margin-bottom: 4px;"><span class="badge" style="background:#d97706;">KETENGAN MIKRO (BATANG / ¼ KG / DILL)</span></div>
+          <div class="grid" style="margin-bottom: 5px;">
+            <div style="grid-column: span 2;">
+              <label>Pecahan / Ketengan Per 1 Kemasan Utama:</label>
+              <select id="jenisPecahan-${id}" onchange="hitungRow(${id})">
+                <option value="12">Rokok 12 Batang / Bks</option>
+                <option value="16">Rokok 16 Batang / Bks</option>
+                <option value="20">Rokok 20 Batang / Bks</option>
+                <option value="4">Minyak/Sembako ¼ Kg (4 bagian per 1 Kg)</option>
+                <option value="2">Minyak/Sembako ½ Kg (2 bagian per 1 Kg)</option>
+                <option value="10">Renceng Isi 10 Pcs/Sachet</option>
+                <option value="12">Renceng Isi 12 Pcs/Sachet</option>
+              </select>
+            </div>
+            <div style="grid-column: span 2;">
+              <label>Total Jumlah Ketengan Terkecil</label>
+              <input type="number" id="totalEceranKecil-${id}" readonly style="background:#f1f5f9; font-weight:bold;">
+            </div>
+          </div>
+          <div class="grid">
+            <div><label>HPP / Ketengan Kecil</label><input type="text" id="hppEceranKecil-${id}" readonly style="background:#f1f5f9; font-weight:bold; color:#4338ca;"></div>
+            <div><label>Margin (%)</label><input type="number" id="marginEceranKecil-${id}" oninput="hitungRow(${id})" value="20"></div>
+            <div><label>Rekomendasi (Kelipatan 500)</label><input type="text" id="rekomendasiEceranKecil-${id}" readonly style="background:#fffbeb; font-weight:bold; color:#92400e;"></div>
+            <div><label>Harga Jual Ketengan Final</label><input type="number" id="jualEceranKecil-${id}" style="background:#ecfdf5; font-weight:bold; color:#065f46;"></div>
+          </div>
+        </div>
+      `;
 
       container.appendChild(div);
       hitungRow(id);
@@ -162,29 +194,44 @@
     }
 
     function hitungRow(id) {
-      var qtyDus = parseFloat(document.getElementById('qtyDus-' + id).value) || 0;
-      var isiPerDus = parseFloat(document.getElementById('isiPerDus-' + id).value) || 0;
-      var hargaBeliTotal = parseFloat(document.getElementById('hargaBeliTotal-' + id).value) || 0;
-      var marginPercent = parseFloat(document.getElementById('marginPercent-' + id).value) || 0;
+      var qtyUtama = parseFloat(document.getElementById('qtyUtama-' + id).value) || 0;
+      var isiPerUtama = parseFloat(document.getElementById('isiPerUtama-' + id).value) || 1;
+      var totalBeli = parseFloat(document.getElementById('hargaBeliTotal-' + id).value) || 0;
+      var pecahan = parseFloat(document.getElementById('jenisPecahan-' + id).value) || 1;
 
-      var totalQtyPcs = qtyDus * isiPerDus;
-      document.getElementById('totalQtyPcs-' + id).value = totalQtyPcs;
+      // 1. Hitung Kemasan Utama (Per Bks / Per Kg)
+      var totalKemasanUtama = qtyUtama * isiPerUtama;
+      document.getElementById('totalKemasanUtama-' + id).value = totalKemasanUtama;
 
-      var hpp = 0;
-      if (totalQtyPcs > 0 && hargaBeliTotal > 0) {
-        hpp = hargaBeliTotal / totalQtyPcs;
+      var hppKemasan = totalKemasanUtama > 0 ? totalBeli / totalKemasanUtama : 0;
+      var marginKemasan = parseFloat(document.getElementById('marginKemasanUtama-' + id).value) || 0;
+      var rekomendasiKemasan = Math.ceil((hppKemasan * (1 + marginKemasan / 100)) / 500) * 500;
+      
+      document.getElementById('hppKemasanUtama-' + id).value = Math.round(hppKemasan).toLocaleString('id-ID');
+      
+      var fKemasan = document.getElementById('jualKemasanUtama-' + id);
+      if (!fKemasan.value || fKemasan.getAttribute('data-auto') === "true") {
+        fKemasan.value = rekomendasiKemasan;
+        fKemasan.setAttribute('data-auto', 'true');
       }
-      document.getElementById('hppPerPcs-' + id).value = Math.round(hpp).toLocaleString('id-ID');
 
-      var rekomendasi = hpp * (1 + (marginPercent / 100));
-      var pembulatan = Math.ceil(rekomendasi / 500) * 500;
+      // 2. Hitung Ketengan Mikro (Per Batang / Per 1/4 Kg)
+      var totalEceranKecil = totalKemasanUtama * pecahan;
+      document.getElementById('totalEceranKecil-' + id).value = totalEceranKecil;
+
+      var hppEceranKecil = totalEceranKecil > 0 ? totalBeli / totalEceranKecil : 0;
+      var marginEceranKecil = parseFloat(document.getElementById('marginEceranKecil-' + id).value) || 0;
       
-      document.getElementById('rekomendasiJual-' + id).value = pembulatan.toLocaleString('id-ID');
+      // Pembulatan ketengan kecil ke kelipatan 500 terdekat
+      var rekomendasiEceranKecil = Math.ceil((hppEceranKecil * (1 + marginEceranKecil / 100)) / 500) * 500;
       
-      var fieldFinal = document.getElementById('hargaJualFinal-' + id);
-      if (!fieldFinal.value || fieldFinal.getAttribute('data-auto') === "true") {
-        fieldFinal.value = pembulatan;
-        fieldFinal.setAttribute('data-auto', 'true');
+      document.getElementById('hppEceranKecil-' + id).value = Math.round(hppEceranKecil).toLocaleString('id-ID');
+      document.getElementById('rekomendasiEceranKecil-' + id).value = rekomendasiEceranKecil.toLocaleString('id-ID');
+
+      var fEceran = document.getElementById('jualEceranKecil-' + id);
+      if (!fEceran.value || fEceran.getAttribute('data-auto') === "true") {
+        fEceran.value = rekomendasiEceranKecil;
+        fEceran.setAttribute('data-auto', 'true');
       }
 
       hitungTotalNota();
@@ -203,7 +250,7 @@
     function simpanKeGoogleSheet() {
       var scriptUrl = document.getElementById('scriptUrl').value.trim();
       if (!scriptUrl) {
-        alert('Mohon isi URL Google Apps Script terlebih dahulu di kotak paling atas!');
+        alert('Mohon isi URL Google Apps Script terlebih dahulu!');
         return;
       }
 
@@ -230,18 +277,19 @@
       for (var i = 0; i < itemDivs.length; i++) {
         var rawId = itemDivs[i].id.split('-')[1];
         var namaBarang = document.getElementById('namaBarang-' + rawId).value.trim();
+        var selectPecahan = document.getElementById('jenisPecahan-' + rawId);
         
         if (namaBarang) {
           items.push({
             namaBarang: namaBarang,
             hargaBeliTotal: parseFloat(document.getElementById('hargaBeliTotal-' + rawId).value) || 0,
-            qtyDus: parseFloat(document.getElementById('qtyDus-' + rawId).value) || 0,
-            isiPerDus: parseFloat(document.getElementById('isiPerDus-' + rawId).value) || 0,
-            totalQtyPcs: parseFloat(document.getElementById('totalQtyPcs-' + rawId).value) || 0,
-            hppPerPcs: parseFloat(document.getElementById('hppPerPcs-' + rawId).value.replace(/\./g, '')) || 0,
-            marginPercent: parseFloat(document.getElementById('marginPercent-' + rawId).value) || 0,
-            rekomendasiJual: parseFloat(document.getElementById('rekomendasiJual-' + rawId).value.replace(/\./g, '')) || 0,
-            hargaJualFinal: parseFloat(document.getElementById('hargaJualFinal-' + rawId).value) || 0
+            totalKemasanUtama: parseFloat(document.getElementById('totalKemasanUtama-' + rawId).value) || 0,
+            hppKemasanUtama: parseFloat(document.getElementById('hppKemasanUtama-' + rawId).value.replace(/\./g, '')) || 0,
+            jualKemasanUtama: parseFloat(document.getElementById('jualKemasanUtama-' + rawId).value) || 0,
+            labelPecahan: selectPecahan.options[selectPecahan.selectedIndex].text,
+            totalEceranKecil: parseFloat(document.getElementById('totalEceranKecil-' + rawId).value) || 0,
+            hppEceranKecil: parseFloat(document.getElementById('hppEceranKecil-' + rawId).value.replace(/\./g, '')) || 0,
+            jualEceranKecil: parseFloat(document.getElementById('jualEceranKecil-' + rawId).value) || 0
           });
         }
       }
@@ -262,12 +310,12 @@
         body: JSON.stringify({ header: header, items: items })
       })
       .then(function() {
-        alert('Data Nota Kulakan berhasil dikirim ke Google Sheet!');
+        alert('Data Nota Kulakan & Ketengan Mikro berhasil dikirim ke Google Sheet!');
         resetForm();
       })
       .catch(function(err) {
         console.error(err);
-        alert('Gagal mengirim data. Periksa koneksi internet atau URL Apps Script Anda.');
+        alert('Gagal mengirim data.');
       })
       .finally(function() {
         btn.disabled = false;
