@@ -4,58 +4,66 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Form Input Nota Kulakan</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; color: #334155; padding-bottom: 50px; }
+    header { background-color: #4338ca; color: white; padding: 15px 20px; text-align: center; font-weight: bold; font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+    .card { background: white; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-title { font-size: 15px; font-weight: bold; color: #1e293b; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+    label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; }
+    input:focus, select:focus, textarea:focus { border-color: #4338ca; box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.2); }
+    .item-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 14px; border-radius: 10px; margin-bottom: 12px; position: relative; }
+    .btn { display: inline-block; width: 100%; padding: 10px 15px; font-size: 13px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; text-align: center; }
+    .btn-add { background-color: #e0e7ff; color: #3730a3; border: 1px dashed #6366f1; margin-top: 10px; }
+    .btn-add:hover { background-color: #c7d2fe; }
+    .btn-delete { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; font-size: 11px; width: auto; float: right; border-radius: 4px; }
+    .btn-save { background-color: #059669; color: white; font-size: 15px; padding: 12px; margin-top: 10px; }
+    .btn-save:hover { background-color: #047857; }
+    .btn-reset { background-color: #e2e8f0; color: #475569; width: auto; padding: 12px 20px; }
+    .total-box { background-color: #1e1b4b; color: white; padding: 15px; border-radius: 10px; text-align: right; }
+    .total-amount { font-size: 24px; font-weight: font-extrabold; margin-top: 5px; color: #a5f3fc; }
+    .config-box { background-color: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+    .flex-actions { display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 15px; }
+  </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-16 font-sans text-slate-800">
+<body>
 
-  <!-- Header -->
-  <header class="bg-indigo-700 text-white py-4 px-6 shadow-md mb-6">
-    <div class="max-w-5xl mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold">
-        📋 Form Nota Kulakan & HPP
-      </h1>
-      <span class="text-xs bg-indigo-800 px-3 py-1 rounded-full text-indigo-200">Online Mode</span>
-    </div>
-  </header>
+  <header>📋 Form Nota Kulakan & HPP Warung</header>
 
-  <main class="max-w-5xl mx-auto px-4">
+  <div class="container">
     
     <!-- Config Google Apps Script -->
-    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 shadow-sm">
-      <label class="block text-xs font-bold text-amber-800 mb-1">
-        🔗 URL GOOGLE APPS SCRIPT (Web App URL):
-      </label>
-      <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" 
-        class="w-full text-xs p-2.5 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
-      <p class="text-[11px] text-amber-700 mt-1">
-        *Masukkan URL Web App dari Google Apps Script di sini (cukup isi 1x, otomatis tersimpan).
-      </p>
+    <div class="config-box">
+      <label style="color: #92400e;">🔗 URL GOOGLE APPS SCRIPT (Web App URL):</label>
+      <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      <small style="color: #b45309; font-size: 10px; display:block; margin-top:3px;">*Cukup diisi 1x, otomatis tersimpan di browser Anda.</small>
     </div>
 
-    <form id="notaForm" onsubmit="return false;">
+    <form id="notaForm">
       
-      <!-- Informasi Nota Header -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
-        <h2 class="text-base font-bold text-slate-700 mb-4 pb-2 border-b border-slate-100">
-          🧾 Informasi Nota
-        </h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Header Nota -->
+      <div class="card">
+        <div class="card-title">🧾 Informasi Nota Belanja</div>
+        <div class="grid">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">No. Nota / Faktur</label>
-            <input type="text" id="noNota" required class="w-full text-sm p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label>No. Nota / Faktur</label>
+            <input type="text" id="noNota" required>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Belanja</label>
-            <input type="date" id="tglNota" required class="w-full text-sm p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label>Tanggal Belanja</label>
+            <input type="date" id="tglNota" required>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Grosir / Supplier</label>
-            <input type="text" id="supplier" placeholder="Contoh: Toko Grosir Jaya" required class="w-full text-sm p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label>Nama Grosir / Supplier</label>
+            <input type="text" id="supplier" placeholder="Toko Grosir Utama" required>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Metode Pembayaran</label>
-            <select id="metodeBayar" class="w-full text-sm p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            <label>Metode Pembayaran</label>
+            <select id="metodeBayar">
               <option value="Tunai">Tunai / Cash</option>
               <option value="Transfer">Transfer Bank</option>
               <option value="Tempo">Tempo / Hutang</option>
@@ -64,36 +72,65 @@
         </div>
       </div>
 
-      <!-- Detail Barang (Items) -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
-        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-          <h2 class="text-base font-bold text-slate-700">
-            📦 Daftar Barang Belanjaan
-          </h2>
-          <button type="button" onclick="tambahBarang()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm cursor-pointer">
-            + Tambah Barang
-          </button>
-        </div>
+      <!-- Detail Barang -->
+      <div class="card">
+        <div class="card-title">📦 Daftar Barang Belanjaan</div>
+        <div id="containerBarang"></div>
+        <button type="button" class="btn btn-add" id="btnTambahBarang">+ Tambah Barang Lagi</button>
+      </div>
 
-        <div id="containerBarang" class="space-y-4">
-          <!-- Item barang akan dirender di sini -->
+      <!-- Catatan & Total -->
+      <div class="grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 15px;">
+        <div class="card" style="margin-bottom:0;">
+          <label>Catatan Tambahan</label>
+          <textarea id="catatan" rows="3" placeholder="Contoh: Titip retur kardus..."></textarea>
         </div>
-
-        <div class="mt-4 pt-3 border-t border-dashed border-slate-200">
-          <button type="button" onclick="tambahBarang()" class="w-full py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-2 border-dashed border-indigo-300 rounded-xl font-bold text-sm cursor-pointer">
-            + Tambah Baris Barang Lagi
-          </button>
+        <div class="total-box">
+          <label style="color:#c7d2fe;">TOTAL BELANJA NOTA</label>
+          <div class="total-amount" id="displayTotalPembelian">Rp 0</div>
         </div>
       </div>
 
-      <!-- Catatan & Ringkasan Total -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:col-span-2">
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan Tambahan</label>
-          <textarea id="catatan" rows="3" placeholder="Contoh: Barang kurang 1 pcs..." class="w-full text-sm p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-        </div>
+      <!-- Tombol Simpan -->
+      <div class="flex-actions">
+        <button type="button" class="btn btn-reset" onclick="resetForm()">🔄 Reset Form</button>
+        <button type="button" class="btn btn-save" id="btnSimpan">☁️ Simpan ke Google Sheet</button>
+      </div>
 
-        <div class="bg-indigo-900 text-white rounded-xl shadow-sm p-5 flex flex-col justify-between">
-          <span class="text-xs text-indigo-200 font-semibold uppercase tracking-wider">Total Pembelian</span>
-          <div class="text-3xl font-extrabold my-2" id="displayTotalPembelian">Rp 0</div>
-          <span class="text-[11px] text-indigo-300">*O
+    </form>
+  </div>
+
+  <script>
+    var countBarang = 0;
+
+    window.addEventListener('DOMContentLoaded', function() {
+      // Set Tanggal & No Nota Otomatis
+      var today = new Date().toISOString().split('T')[0];
+      document.getElementById('tglNota').value = today;
+      document.getElementById('noNota').value = 'NT-' + Date.now().toString().slice(-6);
+      
+      // Load URL Apps Script jika ada
+      var savedUrl = localStorage.getItem('gas_script_url');
+      if (savedUrl) {
+        document.getElementById('scriptUrl').value = savedUrl;
+      }
+
+      // Pasang Event Handler Tombol Utama
+      document.getElementById('btnTambahBarang').onclick = tambahBarang;
+      document.getElementById('btnSimpan').onclick = simpanKeGoogleSheet;
+
+      // Tambah barang pertama saat buka
+      tambahBarang();
+    });
+
+    function tambahBarang() {
+      countBarang++;
+      var id = countBarang;
+      var container = document.getElementById('containerBarang');
+      
+      var div = document.createElement('div');
+      div.id = 'item-' + id;
+      div.className = 'item-box';
+      
+      div.innerHTML = `
+        <button type="button" class="btn btn-delete
