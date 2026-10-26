@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kasir Penjualan - Toko Feby</title>
-  <!-- Library Scanner Barcode Kamera -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -23,6 +22,7 @@
     .btn-primary { background: #0284c7; color: white; }
     .btn-success { background: #059669; color: white; font-size: 13px; }
     .btn-secondary { background: #475569; color: white; font-size: 13px; }
+    .btn-bt { background: #4f46e5; color: white; font-size: 11px; padding: 6px 10px; border-radius: 4px; }
     .btn-danger { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; width: auto; border-radius: 4px; }
     .btn-scan { background: #6366f1; color: white; margin-bottom: 8px; }
     
@@ -32,33 +32,32 @@
     
     .total-box { background: #0f172a; color: white; padding: 15px; border-radius: 8px; margin-top: 15px; }
     .total-amount { font-size: 26px; font-weight: bold; color: #38bdf8; text-align: right; margin-top: 4px; }
-
-    /* UTILITY PRINT THERMAL 58mm */
-    @media print {
-      body * { visibility: hidden; }
-      #strukArea, #strukArea * { visibility: visible; }
-      #strukArea { position: absolute; left: 0; top: 0; width: 58mm; font-family: monospace; font-size: 10px; color: #000; }
-      .no-print { display: none !important; }
-    }
   </style>
 </head>
 <body>
 
-  <header class="no-print">
+  <header>
     <div>
       <a href="index.html" style="color: #93c5fd; text-decoration: none; font-size: 12px; font-weight: bold;">🏠 Menu Utama</a>
       <h2 style="font-size: 18px; margin-top: 2px;">🛒 Kasir Penjualan Toko Feby</h2>
     </div>
   </header>
 
-  <div style="max-width: 1100px; margin: 10px auto; padding: 0 12px;" class="no-print">
-    <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 8px 12px; border-radius: 6px;">
-      <label style="color: #92400e;">URL Google Apps Script:</label>
-      <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  <!-- Baris Pengaturan GAS & Printer Bluetooth -->
+  <div style="max-width: 1100px; margin: 10px auto; padding: 0 12px;">
+    <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 10px; border-radius: 8px; display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: end;">
+      <div>
+        <label style="color: #92400e;">URL Google Apps Script:</label>
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div>
+        <label style="color: #4338ca;">Status Printer BT:</label>
+        <button type="button" class="btn btn-bt" id="btnConnectBT" onclick="connectBluetooth()">🔵 Hubungkan Printer BT</button>
+      </div>
     </div>
   </div>
 
-  <div class="container no-print">
+  <div class="container">
     
     <!-- KOLOM KIRI: SCAN BARCODE & PILIH BARANG -->
     <div class="card">
@@ -140,32 +139,13 @@
         </div>
       </div>
 
-      <!-- TOMBOL PISAH: SIMPAN SAJA VS SIMPAN & CETAK -->
+      <!-- TOMBOL SIMPAN KASIR -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
         <button type="button" class="btn btn-secondary" onclick="prosesTransaksi(false)">💾 Simpan Saja</button>
-        <button type="button" class="btn btn-success" onclick="prosesTransaksi(true)">🖨️ Simpan & Cetak</button>
+        <button type="button" class="btn btn-success" onclick="prosesTransaksi(true)">🖨️ Cetak BT & Simpan</button>
       </div>
     </div>
 
-  </div>
-
-  <!-- CONTAINER STRUK THERMAL (UNTUK PRINTER) -->
-  <div id="strukArea" style="display: none;">
-    <div style="text-align: center; margin-bottom: 5px;">
-      <b>TOKO FEBY</b><br>
-      Sembako, LPG & Kelontong<br>
-      --------------------------------
-    </div>
-    <div id="strukMeta"></div>
-    --------------------------------<br>
-    <div id="strukItems"></div>
-    --------------------------------<br>
-    <div id="strukTotal"></div>
-    --------------------------------<br>
-    <div style="text-align: center; margin-top: 5px;">
-      Terima Kasih Atas Kunjungan Anda!<br>
-      Barang Yang Sudah Dibeli<br>Tidak Dapat Ditukar/Dikembalikan
-    </div>
   </div>
 
   <script>
@@ -173,6 +153,10 @@
     var cart = [];
     var selectedItemData = null;
     var html5QrcodeScanner = null;
+
+    // VARIABEL WEB BLUETOOTH
+    var btDevice = null;
+    var btCharacteristic = null;
 
     window.onload = function() {
       var savedUrl = localStorage.getItem('gas_script_url');
@@ -204,7 +188,48 @@
         .catch(function(err) { console.error(err); });
     }
 
-    /* SISTEM SCANNER BARCODE KAMERA */
+    /* AKSI KONEKSI WEB BLUETOOTH DIRECT PRINTER */
+    async function connectBluetooth() {
+      if (!navigator.bluetooth) {
+        alert('Browser HP kamu belum mendukung Web Bluetooth. Pastikan pakai Chrome di Android!');
+        return;
+      }
+
+      try {
+        btDevice = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '00001101-0000-1000-8000-00805f9b34fb']
+        });
+
+        const server = await btDevice.gatt.connect();
+        const services = await server.getPrimaryServices();
+        
+        for (const service of services) {
+          const characteristics = await service.getCharacteristics();
+          for (const c of characteristics) {
+            if (c.properties.write || c.properties.writeWithoutResponse) {
+              btCharacteristic = c;
+              break;
+            }
+          }
+          if (btCharacteristic) break;
+        }
+
+        if (btCharacteristic) {
+          document.getElementById('btnConnectBT').innerText = '🟢 BT Terhubung: ' + btDevice.name;
+          document.getElementById('btnConnectBT').style.background = '#059669';
+          alert('Printer Bluetooth Berhasil Terhubung!');
+        } else {
+          alert('Gagal menemukan jalur cetak printer.');
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert('Koneksi Bluetooth dibatalkan / gagal: ' + err.message);
+      }
+    }
+
+    /* SCANNER BARCODE KAMERA */
     function toggleScanner() {
       var readerDiv = document.getElementById('reader');
       if (readerDiv.style.display === 'none') {
@@ -230,7 +255,6 @@
 
     function onScanSuccess(decodedText) {
       stopScanner();
-      // Cocokkan nomor barcode atau nama barang dari master data
       var foundIdx = masterBarang.findIndex(function(b) {
         return (b.barcode && b.barcode.toString().trim() === decodedText.trim()) ||
                b.namaBarang.toLowerCase().includes(decodedText.toLowerCase());
@@ -352,8 +376,8 @@
       }
     }
 
-    /* PROSES SIMPAN KE GOOGLE SHEET (DENGAN / TANPA PRINT STRUK) */
-    function prosesTransaksi(isPrint) {
+    /* PROSES SIMPAN TRANSAKSI + DIRECT PRINT VIA BLUETOOTH ESC/POS */
+    async function prosesTransaksi(isPrint) {
       var scriptUrl = document.getElementById('scriptUrl').value.trim();
       if (!scriptUrl) { alert('URL Apps Script belum diisi!'); return; }
       if (cart.length === 0) { alert('Keranjang belanjaan masih kosong!'); return; }
@@ -367,32 +391,48 @@
       var noTrx = "TRX-" + Date.now().toString().slice(-6);
       var today = new Date().toISOString().split('T')[0];
 
-      // JIKA DIKLIK SIMPAN & CETAK
+      // PERINTAH CETAK DIRECT BLUETOOTH
       if (isPrint) {
-        document.getElementById('strukMeta').innerHTML = `
-          No : ${noTrx}<br>
-          Tgl: ${today} ${new Date().toLocaleTimeString('id-ID')}
-        `;
+        if (!btCharacteristic) {
+          alert('Printer Bluetooth belum terhubung! Silakan klik tombol "🔵 Hubungkan Printer BT" di bagian atas.');
+          return;
+        }
 
-        var itemsHtml = '';
+        let textToPrint = "\x1B\x40"; // Reset printer
+        textToPrint += "\x1B\x61\x01"; // Align center
+        textToPrint += "TOKO FEBY\nSembako, LPG & Kelontong\n--------------------------------\n";
+        textToPrint += "\x1B\x61\x00"; // Align left
+        textToPrint += `No : ${noTrx}\n`;
+        textToPrint += `Tgl: ${today} ${new Date().toLocaleTimeString('id-ID')}\n`;
+        textToPrint += "--------------------------------\n";
+
         for (var i = 0; i < cart.length; i++) {
           var itm = cart[i];
-          itemsHtml += `
-            ${itm.namaBarang}<br>
-            ${itm.qty} x ${itm.hargaSatuan.toLocaleString('id-ID')} = Rp ${itm.totalHarga.toLocaleString('id-ID')}<br>
-          `;
+          textToPrint += `${itm.namaBarang}\n`;
+          textToPrint += `${itm.qty} x ${itm.hargaSatuan.toLocaleString('id-ID')} = Rp ${itm.totalHarga.toLocaleString('id-ID')}\n`;
         }
-        document.getElementById('strukItems').innerHTML = itemsHtml;
 
-        document.getElementById('strukTotal').innerHTML = `
-          TOTAL    : Rp ${total.toLocaleString('id-ID')}<br>
-          BAYAR    : Rp ${bayar.toLocaleString('id-ID')}<br>
-          KEMBALI  : Rp ${(kembalian >= 0 ? kembalian : 0).toLocaleString('id-ID')}
-        `;
+        textToPrint += "--------------------------------\n";
+        textToPrint += `TOTAL   : Rp ${total.toLocaleString('id-ID')}\n`;
+        textToPrint += `BAYAR   : Rp ${bayar.toLocaleString('id-ID')}\n`;
+        textToPrint += `KEMBALI : Rp ${(kembalian >= 0 ? kembalian : 0).toLocaleString('id-ID')}\n`;
+        textToPrint += "--------------------------------\n";
+        textToPrint += "\x1B\x61\x01"; // Align center
+        textToPrint += "Terima Kasih!\n\n\n\n";
 
-        document.getElementById('strukArea').style.display = 'block';
-        window.print();
-        document.getElementById('strukArea').style.display = 'none';
+        try {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(textToPrint);
+          
+          // Kirim per chunk (20 byte)
+          for (let i = 0; i < data.length; i += 20) {
+            const chunk = data.slice(i, i + 20);
+            await btCharacteristic.writeValue(chunk);
+          }
+        } catch (e) {
+          console.error(e);
+          alert('Gagal mengirim perintah ke printer Bluetooth: ' + e.message);
+        }
       }
 
       // SIMPAN DATA PENJUALAN KE GOOGLE SHEETS
