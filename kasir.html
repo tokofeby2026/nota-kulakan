@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kasir Penjualan - Toko Feby</title>
+  <!-- Library Scanner Barcode Kamera -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -47,15 +48,14 @@
     </div>
   </header>
 
-  <div style="max-width: 1100px; margin: 10px auto; padding: 0 12px;">
-    <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-      <span style="color: #92400e; font-size: 12px; font-weight: bold;">⚡ Printer Bluetooth Direct ESC/POS</span>
-      <button type="button" class="btn btn-bt" id="btnConnectBT" onclick="connectBluetooth()">🔵 Hubungkan Printer BT</button>
-    </div>
+  <!-- Tombol Printer Bluetooth Atas -->
+  <div style="max-width: 1100px; margin: 10px auto; padding: 0 12px; display: flex; justify-content: flex-end;">
+    <button type="button" class="btn btn-bt" id="btnConnectBT" onclick="connectBluetooth()">🔵 Hubungkan Printer BT</button>
   </div>
 
   <div class="container">
     
+    <!-- KOLOM KIRI: SCAN BARCODE & PILIH BARANG -->
     <div class="card">
       <div class="card-title">🔍 Scan Barcode & Pilih Barang</div>
       
@@ -97,12 +97,14 @@
         <button type="button" class="btn btn-primary" onclick="tambahKeKeranjang()" style="margin-top: 12px;">+ Tambah ke Keranjang</button>
       </div>
 
+      <!-- DAFTAR HOLD TRANSAKSI -->
       <div style="margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 10px;">
         <div style="font-size: 13px; font-weight: bold; color: #d97706; margin-bottom: 8px;">⏸️ Transaksi Ditahan (Hold):</div>
         <div id="boxHoldList" style="font-size: 12px; color: #64748b;">Belum ada transaksi ditahan.</div>
       </div>
     </div>
 
+    <!-- KOLOM KANAN: KERANJANG BELANJA & BAYAR -->
     <div class="card">
       <div class="card-title">
         <span>🛍️ Keranjang Belanja</span>
@@ -131,6 +133,7 @@
         <div class="total-amount" id="displayTotalBelanja">Rp 0</div>
       </div>
 
+      <!-- METODE BAYAR & PEMBAYARAN -->
       <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div>
           <label>Metode Pembayaran:</label>
@@ -152,6 +155,7 @@
         <input type="text" id="displayKembalian" readonly style="background: #f1f5f9; font-weight: bold; color: #d97706;">
       </div>
 
+      <!-- TOMBOL SIMPAN KASIR -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
         <button type="button" class="btn btn-secondary" id="btnSimpanSaja" onclick="prosesTransaksi(false)">💾 Simpan Saja</button>
         <button type="button" class="btn btn-success" id="btnSimpanCetak" onclick="prosesTransaksi(true)">🖨️ Cetak BT & Simpan</button>
@@ -167,6 +171,7 @@
     var selectedItemData = null;
     var html5QrcodeScanner = null;
 
+    // VARIABEL WEB BLUETOOTH
     var btDevice = null;
     var btCharacteristic = null;
 
@@ -176,16 +181,425 @@
 
     function loadMasterBarang() {
       var scriptUrl = localStorage.getItem('gas_script_url');
-      var select = document.getElementById('selectBarang');
-
       if (!scriptUrl) {
-        alert('URL Apps Script belum disetting! Silakan atur melalui Menu Utama.');
+        alert('URL Database belum diisi! Silakan atur melalui Menu Utama.');
         return;
       }
+
+      var select = document.getElementById('selectBarang');
 
       fetch(scriptUrl)
         .then(function(res) { return res.json(); })
         .then(function(res) {
           if (res.result === 'success') {
             masterBarang = res.data;
-            select.innerHTML = '<option value="">-- Pilih
+            select.innerHTML = '<option value="">-- Pilih / Ketik Barang --</option>';
+            for (var i = 0; i < masterBarang.length; i++) {
+              var item = masterBarang[i];
+              select.innerHTML += `<option value="${i}">${item.namaBarang}</option>`;
+            }
+          }
+        })
+        .catch(function(err) { console.error(err); });
+    }
+
+    /* KONEKSI WEB BLUETOOTH PRINTER */
+    async function connectBluetooth() {
+      if (!navigator.bluetooth) {
+        alert('Browser HP belum mendukung Web Bluetooth. Pastikan pakai Chrome di Android!');
+        return;
+      }
+
+      try {
+        btDevice = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '00001101-0000-1000-8000-00805f9b34fb']
+        });
+
+        const server = await btDevice.gatt.connect();
+        const services = await server.getPrimaryServices();
+        
+        for (const service of services) {
+          const characteristics = await service.getCharacteristics();
+          for (const c of characteristics) {
+            if (c.properties.write || c.properties.writeWithoutResponse) {
+              btCharacteristic = c;
+              break;
+            }
+          }
+          if (btCharacteristic) break;
+        }
+
+        if (btCharacteristic) {
+          document.getElementById('btnConnectBT').innerText = '🟢 BT Terhubung';
+          document.getElementById('btnConnectBT').style.background = '#059669';
+          alert('Printer Bluetooth Berhasil Terhubung!');
+        } else {
+          alert('Gagal menemukan jalur cetak printer.');
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert('Koneksi Bluetooth dibatalkan / gagal: ' + err.message);
+      }
+    }
+
+    /* SCANNER BARCODE KAMERA */
+    function toggleScanner() {
+      var readerDiv = document.getElementById('reader');
+      if (readerDiv.style.display === 'none') {
+        readerDiv.style.display = 'block';
+        html5QrcodeScanner = new Html5Qrcode("reader");
+        html5QrcodeScanner.start(
+          { facingMode: "environment" }, 
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          onScanSuccess
+        );
+      } else {
+        stopScanner();
+      }
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(function() {
+          document.getElementById('reader').style.display = 'none';
+        });
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      stopScanner();
+      var foundIdx = masterBarang.findIndex(function(b) {
+        return (b.barcode && b.barcode.toString().trim() === decodedText.trim()) ||
+               b.namaBarang.toLowerCase().includes(decodedText.toLowerCase());
+      });
+
+      if (foundIdx !== -1) {
+        document.getElementById('selectBarang').value = foundIdx;
+        pilihBarang();
+        tambahKeKeranjang();
+      } else {
+        alert('Barcode scanned: ' + decodedText + '\nBarang tidak ditemukan di Master Data!');
+      }
+    }
+
+    function pilihBarang() {
+      var idx = document.getElementById('selectBarang').value;
+      if (idx === '') {
+        document.getElementById('boxPilihanItem').style.display = 'none';
+        return;
+      }
+
+      selectedItemData = masterBarang[idx];
+      document.getElementById('lblNamaBarang').innerText = selectedItemData.namaBarang;
+      
+      var selectSatuan = document.getElementById('selectSatuanJual');
+      selectSatuan.innerHTML = '';
+
+      var hargaUtama = parseFloat(selectedItemData.jualKemasanUtama) || 0;
+      selectSatuan.innerHTML += `<option value="${hargaUtama}">Kemasan Utama (Rp ${hargaUtama.toLocaleString('id-ID')})</option>`;
+
+      var labelMicro = selectedItemData.labelPecahan;
+      var hargaMicro = parseFloat(selectedItemData.jualEceranKecil) || 0;
+      if (labelMicro && labelMicro !== 'Tidak Dipecah' && hargaMicro > 0) {
+        selectSatuan.innerHTML += `<option value="${hargaMicro}">Ketengan ${labelMicro} (Rp ${hargaMicro.toLocaleString('id-ID')})</option>`;
+      }
+
+      document.getElementById('boxPilihanItem').style.display = 'block';
+      updateHargaSatuan();
+    }
+
+    function updateHargaSatuan() {
+      var selectSatuan = document.getElementById('selectSatuanJual');
+      var harga = parseFloat(selectSatuan.value) || 0;
+      document.getElementById('inputHargaSatuan').value = harga;
+      hitungSubtotal();
+    }
+
+    function hitungSubtotal() {
+      var harga = parseFloat(document.getElementById('inputHargaSatuan').value) || 0;
+      var qty = parseFloat(document.getElementById('inputQty').value) || 1;
+      var subtotal = harga * qty;
+      document.getElementById('inputSubtotal').value = 'Rp ' + subtotal.toLocaleString('id-ID');
+    }
+
+    function tambahKeKeranjang() {
+      if (!selectedItemData) return;
+
+      var selectSatuan = document.getElementById('selectSatuanJual');
+      var satuanText = selectSatuan.options[selectSatuan.selectedIndex].text.split('(')[0].trim();
+      var hargaSatuan = parseFloat(document.getElementById('inputHargaSatuan').value) || 0;
+      var qtyInput = parseFloat(document.getElementById('inputQty').value) || 1;
+
+      var existingIndex = cart.findIndex(function(item) {
+        return item.namaBarang === selectedItemData.namaBarang && item.satuanJual === satuanText;
+      });
+
+      if (existingIndex !== -1) {
+        cart[existingIndex].qty += qtyInput;
+        cart[existingIndex].totalHarga = cart[existingIndex].qty * cart[existingIndex].hargaSatuan;
+      } else {
+        cart.push({
+          namaBarang: selectedItemData.namaBarang,
+          satuanJual: satuanText,
+          hargaSatuan: hargaSatuan,
+          qty: qtyInput,
+          totalHarga: hargaSatuan * qtyInput
+        });
+      }
+
+      renderKeranjang();
+      document.getElementById('boxPilihanItem').style.display = 'none';
+      document.getElementById('selectBarang').value = '';
+      document.getElementById('inputQty').value = 1;
+    }
+
+    function renderKeranjang() {
+      var tbody = document.getElementById('cartTableBody');
+      tbody.innerHTML = '';
+      var total = 0;
+
+      if (cart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 15px;">Keranjang masih kosong</td></tr>';
+      } else {
+        for (var i = 0; i < cart.length; i++) {
+          var item = cart[i];
+          total += item.totalHarga;
+          tbody.innerHTML += `
+            <tr>
+              <td><b>${item.namaBarang}</b></td>
+              <td>${item.satuanJual}</td>
+              <td>
+                <input type="number" class="input-edit-cart" value="${item.qty}" min="1" onchange="updateCartQty(${i}, this.value)">
+              </td>
+              <td>
+                <input type="number" class="input-harga-cart" value="${item.totalHarga}" onchange="updateCartTotalDirect(${i}, this.value)">
+              </td>
+              <td><button type="button" class="btn-danger" onclick="hapusCart(${i})">X</button></td>
+            </tr>
+          `;
+        }
+      }
+
+      document.getElementById('displayTotalBelanja').innerText = 'Rp ' + total.toLocaleString('id-ID');
+      changeMetodeBayar();
+    }
+
+    function updateCartQty(idx, newQty) {
+      var q = parseFloat(newQty) || 1;
+      cart[idx].qty = q;
+      cart[idx].totalHarga = q * cart[idx].hargaSatuan;
+      renderKeranjang();
+    }
+
+    function updateCartTotalDirect(idx, newTotal) {
+      var t = parseFloat(newTotal) || 0;
+      cart[idx].totalHarga = t;
+      renderKeranjang();
+    }
+
+    function hapusCart(idx) {
+      cart.splice(idx, 1);
+      renderKeranjang();
+    }
+
+    function changeMetodeBayar() {
+      var metode = document.getElementById('selectMetodeBayar').value;
+      var total = 0;
+      for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
+
+      if (metode === 'QRIS' || metode === 'Transfer') {
+        document.getElementById('inputBayar').value = total;
+      } else if (metode === 'Bon') {
+        document.getElementById('inputBayar').value = 0;
+      }
+      hitungKembalian();
+    }
+
+    function hitungKembalian() {
+      var total = 0;
+      for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
+
+      var bayar = parseFloat(document.getElementById('inputBayar').value) || 0;
+      var kembalian = bayar - total;
+
+      if (bayar > 0) {
+        document.getElementById('displayKembalian').value = 'Rp ' + (kembalian >= 0 ? kembalian.toLocaleString('id-ID') : 'Kurang Rp ' + Math.abs(kembalian).toLocaleString('id-ID'));
+      } else {
+        document.getElementById('displayKembalian').value = 'Rp 0';
+      }
+    }
+
+    function holdTransaksiCurrent() {
+      if (cart.length === 0) {
+        alert('Keranjang kosong, tidak ada transaksi yang bisa ditahan!');
+        return;
+      }
+
+      var note = prompt('Masukkan nama/catatan pembeli untuk transaksi ini:', 'Pembeli #' + (holdList.length + 1));
+      if (note !== null) {
+        holdList.push({
+          label: note.trim() || ('Pembeli #' + (holdList.length + 1)),
+          items: JSON.parse(JSON.stringify(cart))
+        });
+
+        cart = [];
+        renderKeranjang();
+        renderHoldList();
+        alert('Transaksi berhasil ditahan!');
+      }
+    }
+
+    function renderHoldList() {
+      var box = document.getElementById('boxHoldList');
+      if (holdList.length === 0) {
+        box.innerHTML = 'Belum ada transaksi ditahan.';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < holdList.length; i++) {
+        var h = holdList[i];
+        var totalHold = 0;
+        h.items.forEach(function(it) { totalHold += it.totalHarga; });
+
+        html += `
+          <div style="background:#fff3cd; border:1px solid #ffeeba; padding:6px 10px; border-radius:5px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <b>${h.label}</b> (${h.items.length} item) - Rp ${totalHold.toLocaleString('id-ID')}
+            </div>
+            <button type="button" class="btn btn-warning" onclick="unholdTransaksi(${i})" style="padding:3px 8px; font-size:11px;">▶️ Buka Keranjang</button>
+          </div>
+        `;
+      }
+      box.innerHTML = html;
+    }
+
+    function unholdTransaksi(idx) {
+      if (cart.length > 0) {
+        if (!confirm('Keranjang saat ini masih terisi. Yakin ingin menimpa keranjang dengan transaksi yang ditahan?')) {
+          return;
+        }
+      }
+
+      cart = JSON.parse(JSON.stringify(holdList[idx].items));
+      holdList.splice(idx, 1);
+      renderKeranjang();
+      renderHoldList();
+    }
+
+    async function prosesTransaksi(isPrint) {
+      var scriptUrl = localStorage.getItem('gas_script_url');
+      if (!scriptUrl) { alert('URL Database belum diisi!'); return; }
+      if (cart.length === 0) { alert('Keranjang belanjaan masih kosong!'); return; }
+
+      var btn1 = document.getElementById('btnSimpanSaja');
+      var btn2 = document.getElementById('btnSimpanCetak');
+      btn1.disabled = true;
+      btn2.disabled = true;
+      btn1.innerText = '⌛ Memproses...';
+      btn2.innerText = '⌛ Memproses...';
+
+      var total = 0;
+      for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
+
+      var metodeBayar = document.getElementById('selectMetodeBayar').value;
+      var bayar = parseFloat(document.getElementById('inputBayar').value) || 0;
+      var kembalian = bayar - total;
+      var namaPelanggan = "";
+
+      if (metodeBayar === 'Bon') {
+        namaPelanggan = prompt('Masukkan Nama Pelanggan yang nge-Bon:', '');
+        if (!namaPelanggan || namaPelanggan.trim() === '') {
+          alert('Nama pelanggan wajib diisi untuk transaksi Bon!');
+          btn1.disabled = false; btn2.disabled = false;
+          btn1.innerText = '💾 Simpan Saja'; btn2.innerText = '🖨️ Cetak BT & Simpan';
+          return;
+        }
+      }
+
+      var noTrx = "TRX-" + Date.now().toString().slice(-6);
+      var today = new Date().toISOString().split('T')[0];
+
+      if (isPrint) {
+        if (!btCharacteristic) {
+          alert('Printer Bluetooth belum terhubung! Silakan klik "🔵 Hubungkan Printer BT" di kanan atas.');
+          btn1.disabled = false; btn2.disabled = false;
+          btn1.innerText = '💾 Simpan Saja'; btn2.innerText = '🖨️ Cetak BT & Simpan';
+          return;
+        }
+
+        let textToPrint = "\x1B\x40";
+        textToPrint += "\x1B\x61\x01";
+        textToPrint += "TOKO FEBY\nSembako, LPG & Kelontong\n--------------------------------\n";
+        textToPrint += "\x1B\x61\x00";
+        textToPrint += `No   : ${noTrx}\n`;
+        textToPrint += `Tgl  : ${today} ${new Date().toLocaleTimeString('id-ID')}\n`;
+        textToPrint += `Bayar: ${metodeBayar}\n`;
+        textToPrint += "--------------------------------\n";
+
+        for (var i = 0; i < cart.length; i++) {
+          var itm = cart[i];
+          textToPrint += `${itm.namaBarang}\n`;
+          textToPrint += `${itm.qty} x ${itm.hargaSatuan.toLocaleString('id-ID')} = Rp ${itm.totalHarga.toLocaleString('id-ID')}\n`;
+        }
+
+        textToPrint += "--------------------------------\n";
+        textToPrint += `TOTAL   : Rp ${total.toLocaleString('id-ID')}\n`;
+        textToPrint += `BAYAR   : Rp ${bayar.toLocaleString('id-ID')}\n`;
+        textToPrint += `KEMBALI : Rp ${(kembalian >= 0 ? kembalian : 0).toLocaleString('id-ID')}\n`;
+        textToPrint += "--------------------------------\n";
+        textToPrint += "\x1B\x61\x01";
+        textToPrint += "Terima Kasih!\n\n\n\n";
+
+        try {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(textToPrint);
+          for (let i = 0; i < data.length; i += 20) {
+            const chunk = data.slice(i, i + 20);
+            await btCharacteristic.writeValue(chunk);
+          }
+        } catch (e) {
+          console.error(e);
+          alert('Gagal mengirim perintah ke printer Bluetooth: ' + e.message);
+        }
+      }
+
+      var payload = {
+        action: "penjualan",
+        noTransaksi: noTrx,
+        tanggal: today,
+        metodeBayar: metodeBayar,
+        namaPelanggan: namaPelanggan,
+        totalBelanja: total,
+        items: cart
+      };
+
+      fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function() {
+        alert('Transaksi Kasir (' + metodeBayar + ') Berhasil Disimpan!');
+        cart = [];
+        renderKeranjang();
+        document.getElementById('inputBayar').value = '';
+        document.getElementById('displayKembalian').value = 'Rp 0';
+      })
+      .catch(function(err) {
+        console.error(err);
+        alert('Gagal menyimpan transaksi.');
+      })
+      .finally(function() {
+        btn1.disabled = false;
+        btn2.disabled = false;
+        btn1.innerText = '💾 Simpan Saja';
+        btn2.innerText = '🖨️ Cetak BT & Simpan';
+      });
+    }
+  </script>
+</body>
+</html>
