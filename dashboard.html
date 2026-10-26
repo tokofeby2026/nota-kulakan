@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Master Data Barang - Kasir Toko Feby</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; color: #334155; padding-bottom: 50px; }
+    header { background-color: #1e1b4b; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
+    
+    .card { background: white; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .config-box { background-color: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+    
+    label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 4px; }
+    input, select { width: 100%; padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; }
+    input:focus { border-color: #4338ca; box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.2); }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-box { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center; }
+    .stat-number { font-size: 24px; font-weight: bold; color: #4338ca; margin-top: 5px; }
+    
+    .table-responsive { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background-color: #4338ca; color: white; padding: 12px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:hover { background-color: #f8fafc; }
+    
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    .badge-primary { background: #e0e7ff; color: #3730a3; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-emerald { background: #d1fae5; color: #065f46; }
+
+    .price-main { font-weight: bold; color: #059669; font-size: 14px; }
+    .price-micro { font-weight: bold; color: #d97706; font-size: 13px; }
+    .hpp-text { color: #64748b; font-size: 11px; }
+
+    .btn { padding: 10px 16px; font-size: 13px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .btn-primary { background-color: #4338ca; color: white; }
+    .btn-primary:hover { background-color: #3730a3; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <h2>📊 Dashboard Master Data Barang Kasir</h2>
+      <span style="font-size: 12px; background: #312e81; padding: 5px 10px; border-radius: 15px;">Toko Feby Database</span>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Config GAS -->
+    <div class="config-box">
+      <label style="color: #92400e;">🔗 URL GOOGLE APPS SCRIPT (Web App URL):</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        <button type="button" class="btn btn-primary" onclick="loadDataBarang()">🔄 Muat Data</button>
+      </div>
+      <small style="color: #b45309; font-size: 10px; display:block; margin-top:3px;">*URL disamakan dengan URL Google Apps Script pada Form Input Nota Kulakan.</small>
+    </div>
+
+    <!-- Stats Ringkasan -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <label>TOTAL ITEMS TERDAFTAR</label>
+        <div class="stat-number" id="statTotalItems">0</div>
+      </div>
+      <div class="stat-box">
+        <label>TERAKHIR DIPERBARUI</label>
+        <div class="stat-number" style="font-size: 16px; color: #334155; margin-top: 10px;" id="statLastUpdate">-</div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card" style="margin-bottom: 15px; padding: 12px;">
+      <input type="text" id="searchInput" onkeyup="filterBarang()" placeholder="🔍 Cari nama barang... (Contoh: Sampoerna, Ultramilk, Minyak)">
+    </div>
+
+    <!-- Table Master Data Barang -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Barang</th>
+            <th>Tgl Kulakan</th>
+            <th>Satuan Utama</th>
+            <th>Harga Jual Utama</th>
+            <th>Pecahan / Ketengan Mikro</th>
+            <th>Harga Jual Ketengan</th>
+          </tr>
+        </thead>
+        <tbody id="tableBodyBarang">
+          <tr>
+            <td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">
+              Silakan masukkan URL Apps Script di atas lalu klik <b>Muat Data</b>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    var masterBarang = [];
+
+    window.onload = function() {
+      var savedUrl = localStorage.getItem('gas_script_url');
+      if (savedUrl) {
+        document.getElementById('scriptUrl').value = savedUrl;
+        loadDataBarang();
+      }
+    };
+
+    function loadDataBarang() {
+      var scriptUrl = document.getElementById('scriptUrl').value.trim();
+      if (!scriptUrl) {
+        alert('Mohon masukkan URL Google Apps Script terlebih dahulu!');
+        return;
+      }
+
+      localStorage.setItem('gas_script_url', scriptUrl);
+      var tbody = document.getElementById('tableBodyBarang');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">⌛ Mengambil data dari Google Sheet...</td></tr>';
+
+      fetch(scriptUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(response) {
+          if (response.result === 'success') {
+            masterBarang = response.data;
+            renderTable(masterBarang);
+            
+            document.getElementById('statTotalItems').innerText = masterBarang.length;
+            if (masterBarang.length > 0) {
+              document.getElementById('statLastUpdate').innerText = masterBarang[masterBarang.length - 1].tanggal || '-';
+            }
+          } else {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red; padding: 20px;">Gagal mengambil data: ' + response.message + '</td></tr>';
+          }
+        })
+        .catch(function(err) {
+          console.error(err);
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red; padding: 20px;">Terjadi kesalahan jaringan atau CORS policy. Pastikan Apps Script sudah di-deploy sebagai "Anyone".</td></tr>';
+        });
+    }
+
+    function renderTable(data) {
+      var tbody = document.getElementById('tableBodyBarang');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Tidak ada data barang ditemukan.</td></tr>';
+        return;
+      }
+
+      for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var tr = document.createElement('tr');
+
+        var hppUtamaFormat = item.hppKemasanUtama ? 'Rp ' + parseFloat(item.hppKemasanUtama).toLocaleString('id-ID') : '-';
+        var jualUtamaFormat = item.jualKemasanUtama ? 'Rp ' + parseFloat(item.jualKemasanUtama).toLocaleString('id-ID') : '-';
+        
+        var hppMicroFormat = item.hppEceranKecil ? 'Rp ' + parseFloat(item.hppEceranKecil).toLocaleString('id-ID') : '-';
+        var jualMicroFormat = item.jualEceranKecil ? 'Rp ' + parseFloat(item.jualEceranKecil).toLocaleString('id-ID') : '-';
+
+        var labelKetengan = item.labelPecahan || 'Tidak Dipecah';
+        var isDipecah = labelKetengan !== 'Tidak Dipecah' && parseFloat(item.jualEceranKecil) > 0;
+
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td><b>${item.namaBarang}</b></td>
+          <td><span class="badge badge-primary">${item.tanggal || '-'}</span></td>
+          <td>${item.totalKemasanUtama || '-'} Pcs/Bks/Kg</td>
+          <td>
+            <div class="price-main">${jualUtamaFormat}</div>
+            <div class="hpp-text">HPP: ${hppUtamaFormat}</div>
+          </td>
+          <td>
+            <span class="badge ${isDipecah ? 'badge-amber' : 'badge-primary'}">${labelKetengan}</span>
+          </td>
+          <td>
+            ${isDipecah ? `
+              <div class="price-micro">${jualMicroFormat}</div>
+              <div class="hpp-text">HPP: ${hppMicroFormat}</div>
+            ` : '<span style="color:#94a3b8;">-</span>'}
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    function filterBarang() {
+      var query = document.getElementById('searchInput').value.toLowerCase();
+      var filtered = masterBarang.filter(function(item) {
+        return item.namaBarang.toLowerCase().includes(query);
+      });
+      renderTable(filtered);
+    }
+  </script>
+</body>
+</html>
