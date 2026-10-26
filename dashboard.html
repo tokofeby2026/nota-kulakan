@@ -3,38 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Barang & Harga - Toko Feby</title>
+  <title>Dashboard Master Data Barang - Toko Feby</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: #f8fafc; color: #334155; padding-bottom: 40px; }
+    body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
     
-    header { background-color: #1e1b4b; color: white; padding: 15px 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-    .header-content h2 { font-size: 18px; font-weight: 700; margin-top: 5px; }
+    header { background-color: #1e1b4b; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
     
-    .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+    .container { max-width: 1100px; margin: 15px auto; padding: 0 12px; }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .stat-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .stat-title { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
-    .stat-value { font-size: 20px; font-weight: 700; color: #1e293b; margin-top: 5px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    .stat-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .stat-title { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: bold; color: #0f172a; }
+
+    .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     
-    .card { background: white; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 15px; }
-    .card-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
+    input[type="text"] { width: 100%; padding: 9px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
     
-    .search-box { width: 100%; max-width: 300px; padding: 8px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
-    
-    .table-responsive { overflow-x: auto; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-    th { background-color: #f1f5f9; color: #475569; font-weight: 600; padding: 10px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
-    td { padding: 10px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #f8fafc; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: bold; white-space: nowrap; }
+    td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; white-space: nowrap; }
     tr:hover { background-color: #f8fafc; }
     
-    .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-    .badge-primary { background-color: #e0e7ff; color: #3730a3; }
-    .badge-warning { background-color: #fef3c7; color: #92400e; }
-    
-    .btn-refresh { background-color: #4338ca; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; color: white; display: inline-block; }
+    .bg-blue { background: #0284c7; }
+    .bg-amber { background: #d97706; }
   </style>
 </head>
 <body>
@@ -52,29 +49,24 @@
   </header>
 
   <div class="container">
-
+    
+    <!-- STATISTIK RINGKASAN -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-title">Total Jenis Barang</div>
         <div class="stat-value" id="statTotalItem">0 Item</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Barang Memiliki Ketengan</div>
-        <div class="stat-value" id="statTotalDipecah">0 Item</div>
-      </div>
-      <div class="stat-card">
         <div class="stat-title">Terakhir Diperbarui</div>
-        <div class="stat-value" id="statLastUpdate" style="font-size: 14px; margin-top: 8px;">-</div>
+        <div class="stat-value" id="statLastUpdate" style="font-size: 14px; color: #0284c7;">-</div>
       </div>
     </div>
 
+    <!-- TABEL MASTER DATA BARANG -->
     <div class="card">
-      <div class="card-title">
-        <span>📋 Master Katalog Barang & Harga Jual</span>
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="inputCari" class="search-box" placeholder="🔍 Cari nama barang..." onkeyup="filterTabel()">
-          <button type="button" class="btn-refresh" onclick="loadDataBarang()">🔄 Refresh</button>
-        </div>
+      <div class="search-box">
+        <input type="text" id="inputCari" onkeyup="filterBarang()" placeholder="🔍 Cari nama barang atau nomor barcode...">
+        <button type="button" onclick="loadDataBarang()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; white-space: nowrap;">🔄 Refresh</button>
       </div>
 
       <div class="table-responsive">
@@ -84,15 +76,15 @@
               <th>No</th>
               <th>Nama Barang</th>
               <th>Barcode</th>
-              <th>Harga Jual Kemasan Utama</th>
-              <th>Rincian Ketengan Mikro</th>
-              <th>Harga Jual Ketengan</th>
-              <th>Nota Beli</th>
+              <th>Harga Jual (Utama)</th>
+              <th>Eceran Ketengan</th>
+              <th>Harga Jual (Ketengan)</th>
+              <th>Nota Terakhir</th>
             </tr>
           </thead>
-          <tbody id="tabelBody">
+          <tbody id="tableBodyBarang">
             <tr>
-              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data dari Google Sheets...</td>
+              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang...</td>
             </tr>
           </tbody>
         </table>
@@ -110,78 +102,86 @@
 
     function loadDataBarang() {
       var scriptUrl = localStorage.getItem('gas_script_url');
-      var tbody = document.getElementById('tabelBody');
+      var tbody = document.getElementById('tableBodyBarang');
 
       if (!scriptUrl) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">URL Apps Script belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data dari Google Sheets...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang...</td></tr>';
 
       fetch(scriptUrl)
         .then(function(res) { return res.json(); })
         .then(function(res) {
           if (res.result === 'success') {
-            masterBarang = res.data;
-            renderTabel(masterBarang);
-            updateStats(masterBarang);
+            masterBarang = res.data || [];
+            renderTableBarang(masterBarang);
+            updateStats();
           } else {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">' + res.message + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data dari Google Sheets.</td></tr>';
           }
         })
         .catch(function(err) {
           console.error(err);
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data. Pastikan jaringan aman.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Terjadi kesalahan koneksi.</td></tr>';
         });
     }
 
-    function renderTabel(data) {
-      var tbody = document.getElementById('tabelBody');
+    function renderTableBarang(data) {
+      var tbody = document.getElementById('tableBodyBarang');
       tbody.innerHTML = '';
 
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Tidak ada data barang.</td></tr>';
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada data barang tersimpan.</td></tr>';
         return;
       }
 
       for (var i = 0; i < data.length; i++) {
         var item = data[i];
+        var barcodeTxt = item.barcode ? `<code>${item.barcode}</code>` : '<span style="color:#cbd5e1;">-</span>';
+        var hargaUtama = parseFloat(item.jualKemasanUtama) || 0;
         
-        var jualUtama = item.jualKemasanUtama ? 'Rp ' + parseFloat(item.jualKemasanUtama).toLocaleString('id-ID') : '-';
-        var jualEceran = item.jualEceranKecil ? 'Rp ' + parseFloat(item.jualEceranKecil).toLocaleString('id-ID') : '-';
+        var labelMicro = item.labelPecahan || 'Tidak Dipecah';
+        var hargaMicro = parseFloat(item.jualEceranKecil) || 0;
         
-        var isPecah = item.labelPecahan && item.labelPecahan !== 'Tidak Dipecah';
-        var ketenganBadge = isPecah 
-          ? `<span class="badge badge-warning">Dipecah ke ${item.labelPecahan} (${item.totalEceranKecil || '-'} unit)</span>` 
-          : `<span style="color:#94a3b8; font-size:11px;">Utama Saja</span>`;
+        var microDisplay = (labelMicro !== 'Tidak Dipecah' && hargaMicro > 0)
+          ? `<span class="badge bg-amber">${labelMicro}</span>`
+          : '<span style="color:#cbd5e1;">-</span>';
 
-        var barcodeDisplay = item.barcode ? `<code>${item.barcode}</code>` : `<span style="color:#cbd5e1;">-</span>`;
+        var hargaMicroDisplay = (labelMicro !== 'Tidak Dipecah' && hargaMicro > 0)
+          ? `<b>Rp ${hargaMicro.toLocaleString('id-ID')}</b>`
+          : '<span style="color:#cbd5e1;">-</span>';
 
         tbody.innerHTML += `
           <tr>
             <td>${i + 1}</td>
             <td><b>${item.namaBarang}</b></td>
-            <td>${barcodeDisplay}</td>
-            <td><span class="badge badge-primary" style="font-size:12px;">${jualUtama}</span></td>
-            <td>${ketenganBadge}</td>
-            <td><b>${isPecah ? jualEceran : '-'}</b></td>
-            <td style="font-size: 11px; color: #64748b;">${item.noNota || '-'}<br>${item.tanggal || ''}</td>
+            <td>${barcodeTxt}</td>
+            <td style="color: #059669; font-weight: bold;">Rp ${hargaUtama.toLocaleString('id-ID')}</td>
+            <td>${microDisplay}</td>
+            <td>${hargaMicroDisplay}</td>
+            <td><small style="color: #64748b;">${item.noNota || '-'}</small></td>
           </tr>
         `;
       }
     }
 
-    function updateStats(data) {
-      document.getElementById('statTotalItem').innerText = data.length + ' Item';
-      
-      var dipecah = data.filter(function(b) {
-        return b.labelPecahan && b.labelPecahan !== 'Tidak Dipecah';
-      }).length;
-      document.getElementById('statTotalDipecah').innerText = dipecah + ' Item';
+    function filterBarang() {
+      var keyword = document.getElementById('inputCari').value.toLowerCase();
+      var filtered = masterBarang.filter(function(item) {
+        var nama = (item.namaBarang || '').toLowerCase();
+        var barcode = (item.barcode || '').toString().toLowerCase();
+        return nama.includes(keyword) || barcode.includes(keyword);
+      });
+      renderTableBarang(filtered);
+    }
 
-      if (data.length > 0) {
-        var rawDate = data[data.length - 1].tanggal;
+    function updateStats() {
+      document.getElementById('statTotalItem').innerText = masterBarang.length + ' Item';
+
+      if (masterBarang.length > 0) {
+        var rawDate = masterBarang[masterBarang.length - 1].tanggal;
         if (rawDate) {
           var d = new Date(rawDate);
           if (!isNaN(d.getTime())) {
@@ -190,6 +190,7 @@
             var thn = d.getFullYear();
             var jam = String(d.getHours()).padStart(2, '0');
             var mnt = String(d.getMinutes()).padStart(2, '0');
+            
             document.getElementById('statLastUpdate').innerText = tgl + '-' + bln + '-' + thn + ' ' + jam + ':' + mnt + ' WIB';
           } else {
             document.getElementById('statLastUpdate').innerText = rawDate;
@@ -197,8 +198,10 @@
         } else {
           document.getElementById('statLastUpdate').innerText = '-';
         }
+      } else {
+        document.getElementById('statLastUpdate').innerText = '-';
       }
     }
-
-    function filterTabel() {
-      var keyword = document.
+  </script>
+</body>
+</html>
