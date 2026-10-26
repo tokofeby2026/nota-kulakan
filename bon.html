@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buku Bon & Pelunasan - Toko Feby</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
+    header { background-color: #0f172a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 900px; margin: 15px auto; padding: 0 12px; }
+    
+    .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .title { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    th { background: #f8fafc; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #475569; }
+    td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    
+    .badge-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+    .badge-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+    
+    .btn-lunas { background: #16a34a; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
+    .btn-lunas:disabled { background: #94a3b8; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <a href="index.html" style="color: #93c5fd; text-decoration: none; font-size: 12px; font-weight: bold;">🏠 Menu Utama</a>
+      <h2 style="font-size: 18px; margin-top: 2px;">📝 Buku Bon & Catatan Hutang</h2>
+    </div>
+  </header>
+
+  <input type="hidden" id="scriptUrl">
+
+  <div class="container">
+    
+    <div class="card">
+      <div class="title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>📋 Daftar Piutang / Bon Pelanggan</span>
+        <button type="button" onclick="loadDataBon()" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">🔄 Refresh Data</button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>No Trx / Tgl</th>
+              <th>Nama Pelanggan</th>
+              <th>Rincian Barang</th>
+              <th>Total Bon</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tableBonBody">
+            <tr>
+              <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data bon...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    window.onload = function() {
+      var savedUrl = localStorage.getItem('gas_script_url');
+      if (savedUrl) {
+        document.getElementById('scriptUrl').value = savedUrl;
+        loadDataBon();
+      } else {
+        alert('URL Google Apps Script belum disetting di Kasir!');
+      }
+    };
+
+    function loadDataBon() {
+      var scriptUrl = document.getElementById('scriptUrl').value.trim();
+      if (!scriptUrl) return;
+
+      var tbody = document.getElementById('tableBonBody');
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data bon...</td></tr>';
+
+      fetch(scriptUrl + '?action=get_bon')
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+          if (res.result === 'success') {
+            renderTableBon(res.data);
+          }
+        })
+        .catch(function(err) {
+          console.error(err);
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">Gagal memuat data.</td></tr>';
+        });
+    }
+
+    function renderTableBon(data) {
+      var tbody = document.getElementById('tableBonBody');
+      tbody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Tidak ada catatan bon.</td></tr>';
+        return;
+      }
+
+      // Urutkan dari yang terbaru
+      data.reverse();
+
+      for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var isBelumLunas = (item.status === 'BELUM LUNAS');
+        var badge = isBelumLunas ? '<span class="badge-danger">BELUM LUNAS</span>' : '<span class="badge-success">LUNAS</span>';
+        
+        var btnAksi = isBelumLunas 
+          ? `<button type="button" class="btn-lunas" onclick="pelunasanBon('${item.noTransaksi}', '${item.namaPelanggan}', ${item.totalBon})">✅ Lunasi</button>`
+          : '<span style="color: #16a34a; font-weight: bold;">Selesai</span>';
+
+        var tglFormatted = typeof item.tanggal === 'string' ? item.tanggal.substring(0, 10) : item.tanggal;
+
+        tbody.innerHTML += `
+          <tr>
+            <td><b>${item.noTransaksi}</b><br><small style="color: #64748b;">${tglFormatted}</small></td>
+            <td><b>${item.namaPelanggan}</b></td>
+            <td style="max-width: 200px;">${item.rincianBarang}</td>
+            <td style="font-weight: bold; color: #0f172a;">Rp ${parseFloat(item.totalBon || 0).toLocaleString('id-ID')}</td>
+            <td>${badge}</td>
+            <td>${btnAksi}</td>
+          </tr>
+        `;
+      }
+    }
+
+    function pelunasanBon(noTrx, nama, total) {
+      if (!confirm(`Konfirmasi Pelunasan:\n\nPelanggan: ${nama}\nTotal Bon: Rp ${parseFloat(total).toLocaleString('id-ID')}\n\nYakin transaksi ini sudah LUNAS dibayar?`)) {
+        return;
+      }
+
+      var scriptUrl = document.getElementById('scriptUrl').value.trim();
+      var payload = {
+        action: "lunasi_bon",
+        noTransaksi: noTrx
+      };
+
+      fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function() {
+        alert('Status Bon Berhasil Diubah Menjadi LUNAS!');
+        loadDataBon();
+      })
+      .catch(function(err) {
+        console.error(err);
+        alert('Gagal mengupdate status pelunasan.');
+      });
+    }
+  </script>
+</body>
+</html>
