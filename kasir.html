@@ -349,74 +349,75 @@
       }
     }
 
-    /* PROSES SIMPAN KE GOOGLE SHEET & CETAK STRUK THERMAL */
-    function simpanDanCetak() {
-      var scriptUrl = document.getElementById('scriptUrl').value.trim();
-      if (!scriptUrl) { alert('URL Apps Script belum diisi!'); return; }
-      if (cart.length === 0) { alert('Keranjang belanjaan masih kosong!'); return; }
+    /* PROSES SIMPAN KE GOOGLE SHEET (DENGAN / TANPA PRINT) */
+function prosesTransaksi(isPrint) {
+  var scriptUrl = document.getElementById('scriptUrl').value.trim();
+  if (!scriptUrl) { alert('URL Apps Script belum diisi!'); return; }
+  if (cart.length === 0) { alert('Keranjang belanjaan masih kosong!'); return; }
 
-      var total = 0;
-      for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
+  var total = 0;
+  for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
 
-      var bayar = parseFloat(document.getElementById('inputBayar').value) || 0;
-      var kembalian = bayar - total;
+  var bayar = parseFloat(document.getElementById('inputBayar').value) || 0;
+  var kembalian = bayar - total;
 
-      var noTrx = "TRX-" + Date.now().toString().slice(-6);
-      var today = new Date().toISOString().split('T')[0];
+  var noTrx = "TRX-" + Date.now().toString().slice(-6);
+  var today = new Date().toISOString().split('T')[0];
 
-      // 1. Susun Tampilan Struk Printer Thermal
-      document.getElementById('strukMeta').innerHTML = `
-        No : ${noTrx}<br>
-        Tgl: ${today} ${new Date().toLocaleTimeString('id-ID')}
+  // JIKA PILIH PRINT STRUK
+  if (isPrint) {
+    document.getElementById('strukMeta').innerHTML = `
+      No : ${noTrx}<br>
+      Tgl: ${today} ${new Date().toLocaleTimeString('id-ID')}
+    `;
+
+    var itemsHtml = '';
+    for (var i = 0; i < cart.length; i++) {
+      var itm = cart[i];
+      itemsHtml += `
+        ${itm.namaBarang}<br>
+        ${itm.qty} x ${itm.hargaSatuan.toLocaleString('id-ID')} = Rp ${itm.totalHarga.toLocaleString('id-ID')}<br>
       `;
-
-      var itemsHtml = '';
-      for (var i = 0; i < cart.length; i++) {
-        var itm = cart[i];
-        itemsHtml += `
-          ${itm.namaBarang}<br>
-          ${itm.qty} x ${itm.hargaSatuan.toLocaleString('id-ID')} = Rp ${itm.totalHarga.toLocaleString('id-ID')}<br>
-        `;
-      }
-      document.getElementById('strukItems').innerHTML = itemsHtml;
-
-      document.getElementById('strukTotal').innerHTML = `
-        TOTAL    : Rp ${total.toLocaleString('id-ID')}<br>
-        BAYAR    : Rp ${bayar.toLocaleString('id-ID')}<br>
-        KEMBALI  : Rp ${(kembalian >= 0 ? kembalian : 0).toLocaleString('id-ID')}
-      `;
-
-      // 2. Trigger Print
-      document.getElementById('strukArea').style.display = 'block';
-      window.print();
-      document.getElementById('strukArea').style.display = 'none';
-
-      // 3. Simpan Ke Google Sheets
-      var payload = {
-        action: "penjualan",
-        noTransaksi: noTrx,
-        tanggal: today,
-        items: cart
-      };
-
-      fetch(scriptUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(function() {
-        alert('Transaksi Berhasil Disimpan ke Google Sheet!');
-        cart = [];
-        renderKeranjang();
-        document.getElementById('inputBayar').value = '';
-        document.getElementById('displayKembalian').value = 'Rp 0';
-      })
-      .catch(function(err) {
-        console.error(err);
-        alert('Gagal menyimpan ke Google Sheet.');
-      });
     }
+    document.getElementById('strukItems').innerHTML = itemsHtml;
+
+    document.getElementById('strukTotal').innerHTML = `
+      TOTAL    : Rp ${total.toLocaleString('id-ID')}<br>
+      BAYAR    : Rp ${bayar.toLocaleString('id-ID')}<br>
+      KEMBALI  : Rp ${(kembalian >= 0 ? kembalian : 0).toLocaleString('id-ID')}
+    `;
+
+    document.getElementById('strukArea').style.display = 'block';
+    window.print();
+    document.getElementById('strukArea').style.display = 'none';
+  }
+
+  // SIMPAN KE GOOGLE SHEETS
+  var payload = {
+    action: "penjualan",
+    noTransaksi: noTrx,
+    tanggal: today,
+    items: cart
+  };
+
+  fetch(scriptUrl, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(function() {
+    alert('Transaksi Berhasil Disimpan!');
+    cart = [];
+    renderKeranjang();
+    document.getElementById('inputBayar').value = '';
+    document.getElementById('displayKembalian').value = 'Rp 0';
+  })
+  .catch(function(err) {
+    console.error(err);
+    alert('Gagal menyimpan ke Google Sheet.');
+  });
+}
   </script>
 </body>
 </html>
