@@ -14,7 +14,7 @@
     @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
     
     .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card-title { font-weight: bold; font-size: 15px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; color: #1e293b; }
+    .card-title { font-weight: bold; font-size: 15px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
     
     label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 3px; }
     input, select { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; }
@@ -23,6 +23,7 @@
     .btn-primary { background: #0284c7; color: white; }
     .btn-success { background: #059669; color: white; font-size: 13px; }
     .btn-secondary { background: #475569; color: white; font-size: 13px; }
+    .btn-warning { background: #d97706; color: white; font-size: 12px; padding: 6px 10px; border-radius: 6px; width: auto; }
     .btn-bt { background: #4f46e5; color: white; font-size: 12px; padding: 8px 12px; border-radius: 6px; }
     .btn-danger { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; width: auto; border-radius: 4px; }
     .btn-scan { background: #6366f1; color: white; margin-bottom: 8px; }
@@ -36,6 +37,8 @@
     
     .input-edit-cart { width: 60px; padding: 4px; font-size: 12px; text-align: center; font-weight: bold; }
     .input-harga-cart { width: 85px; padding: 4px; font-size: 12px; text-align: right; font-weight: bold; }
+
+    .badge-hold { background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -105,11 +108,20 @@
 
         <button type="button" class="btn btn-primary" onclick="tambahKeKeranjang()" style="margin-top: 12px;">+ Tambah ke Keranjang</button>
       </div>
+
+      <!-- DAFTAR HOLD TRANSAKSI -->
+      <div style="margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 10px;">
+        <div style="font-size: 13px; font-weight: bold; color: #d97706; margin-bottom: 8px;">⏸️ Transaksi Ditahan (Hold):</div>
+        <div id="boxHoldList" style="font-size: 12px; color: #64748b;">Belum ada transaksi ditahan.</div>
+      </div>
     </div>
 
     <!-- KOLOM KANAN: KERANJANG BELANJA & BAYAR -->
     <div class="card">
-      <div class="card-title">🛍️ Keranjang Belanja Pembeli</div>
+      <div class="card-title">
+        <span>🛍️ Keranjang Belanja</span>
+        <button type="button" class="btn btn-warning" onclick="holdTransaksiCurrent()">⏸️ Hold Keranjang</button>
+      </div>
 
       <table class="cart-table">
         <thead>
@@ -133,18 +145,29 @@
         <div class="total-amount" id="displayTotalBelanja">Rp 0</div>
       </div>
 
+      <!-- METODE BAYAR & PEMBAYARAN -->
       <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div>
+          <label>Metode Pembayaran:</label>
+          <select id="selectMetodeBayar" onchange="changeMetodeBayar()">
+            <option value="Tunai">💵 Tunai</option>
+            <option value="QRIS">📱 QRIS</option>
+            <option value="Transfer">💳 Transfer Bank</option>
+            <option value="Bon">📝 Bon / Hutang</option>
+          </select>
+        </div>
         <div>
           <label>Uang Bayar (Rp):</label>
           <input type="number" id="inputBayar" oninput="hitungKembalian()" placeholder="0">
         </div>
-        <div>
-          <label>Kembalian (Rp):</label>
-          <input type="text" id="displayKembalian" readonly style="background: #f1f5f9; font-weight: bold; color: #d97706;">
-        </div>
       </div>
 
-      <!-- TOMBOL SIMPAN KASIR DENGAN SAFETY DISABLED -->
+      <div style="margin-top: 8px;">
+        <label>Kembalian (Rp):</label>
+        <input type="text" id="displayKembalian" readonly style="background: #f1f5f9; font-weight: bold; color: #d97706;">
+      </div>
+
+      <!-- TOMBOL SIMPAN KASIR -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
         <button type="button" class="btn btn-secondary" id="btnSimpanSaja" onclick="prosesTransaksi(false)">💾 Simpan Saja</button>
         <button type="button" class="btn btn-success" id="btnSimpanCetak" onclick="prosesTransaksi(true)">🖨️ Cetak BT & Simpan</button>
@@ -156,6 +179,7 @@
   <script>
     var masterBarang = [];
     var cart = [];
+    var holdList = [];
     var selectedItemData = null;
     var html5QrcodeScanner = null;
 
@@ -205,7 +229,7 @@
         .catch(function(err) { console.error(err); });
     }
 
-    /* KONEKSI WEB BLUETOOTH DIRECT PRINTER */
+    /* KONEKSI WEB BLUETOOTH PRINTER */
     async function connectBluetooth() {
       if (!navigator.bluetooth) {
         alert('Browser HP belum mendukung Web Bluetooth. Pastikan pakai Chrome di Android!');
@@ -280,7 +304,7 @@
       if (foundIdx !== -1) {
         document.getElementById('selectBarang').value = foundIdx;
         pilihBarang();
-        tambahKeKeranjang(); // Otomatis masuk keranjang jika dari scanner
+        tambahKeKeranjang();
       } else {
         alert('Barcode scanned: ' + decodedText + '\nBarang tidak ditemukan di Master Data!');
       }
@@ -326,7 +350,6 @@
       document.getElementById('inputSubtotal').value = 'Rp ' + subtotal.toLocaleString('id-ID');
     }
 
-    /* FITUR AUTO-MERGE JIKA BARANG DI-INPUT 2X */
     function tambahKeKeranjang() {
       if (!selectedItemData) return;
 
@@ -335,17 +358,14 @@
       var hargaSatuan = parseFloat(document.getElementById('inputHargaSatuan').value) || 0;
       var qtyInput = parseFloat(document.getElementById('inputQty').value) || 1;
 
-      // Cek apakah barang & satuan yang sama sudah ada di keranjang
       var existingIndex = cart.findIndex(function(item) {
         return item.namaBarang === selectedItemData.namaBarang && item.satuanJual === satuanText;
       });
 
       if (existingIndex !== -1) {
-        // Jika barang sudah ada, cukup tambahkan Qty-nya
         cart[existingIndex].qty += qtyInput;
         cart[existingIndex].totalHarga = cart[existingIndex].qty * cart[existingIndex].hargaSatuan;
       } else {
-        // Jika belum ada, buat baris baru
         cart.push({
           namaBarang: selectedItemData.namaBarang,
           satuanJual: satuanText,
@@ -389,10 +409,9 @@
       }
 
       document.getElementById('displayTotalBelanja').innerText = 'Rp ' + total.toLocaleString('id-ID');
-      hitungKembalian();
+      changeMetodeBayar();
     }
 
-    /* FITUR EDIT QTY LANGSUNG DI TABEL KERANJANG */
     function updateCartQty(idx, newQty) {
       var q = parseFloat(newQty) || 1;
       cart[idx].qty = q;
@@ -400,7 +419,6 @@
       renderKeranjang();
     }
 
-    /* FITUR HARGA PAKET (Cth: Beli 3 Batang Rokok Langsung Edit Total Rp 5.000) */
     function updateCartTotalDirect(idx, newTotal) {
       var t = parseFloat(newTotal) || 0;
       cart[idx].totalHarga = t;
@@ -410,6 +428,20 @@
     function hapusCart(idx) {
       cart.splice(idx, 1);
       renderKeranjang();
+    }
+
+    /* FITUR METODE BAYAR AUTO-FILL NON-TUNAI */
+    function changeMetodeBayar() {
+      var metode = document.getElementById('selectMetodeBayar').value;
+      var total = 0;
+      for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
+
+      if (metode === 'QRIS' || metode === 'Transfer') {
+        document.getElementById('inputBayar').value = total;
+      } else if (metode === 'Bon') {
+        document.getElementById('inputBayar').value = 0;
+      }
+      hitungKembalian();
     }
 
     function hitungKembalian() {
@@ -426,13 +458,71 @@
       }
     }
 
-    /* PROSES SIMPAN TRANSAKSI + SAFETY ANTI DOUBLE CLICK */
+    /* FITUR HOLD TRANSAKSI */
+    function holdTransaksiCurrent() {
+      if (cart.length === 0) {
+        alert('Keranjang kosong, tidak ada transaksi yang bisa ditahan!');
+        return;
+      }
+
+      var note = prompt('Masukkan nama/catatan pembeli untuk transaksi ini:', 'Pembeli #' + (holdList.length + 1));
+      if (note !== null) {
+        holdList.push({
+          label: note.trim() || ('Pembeli #' + (holdList.length + 1)),
+          items: JSON.parse(JSON.stringify(cart))
+        });
+
+        cart = [];
+        renderKeranjang();
+        renderHoldList();
+        alert('Transaksi berhasil ditahan!');
+      }
+    }
+
+    function renderHoldList() {
+      var box = document.getElementById('boxHoldList');
+      if (holdList.length === 0) {
+        box.innerHTML = 'Belum ada transaksi ditahan.';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < holdList.length; i++) {
+        var h = holdList[i];
+        var totalHold = 0;
+        h.items.forEach(function(it) { totalHold += it.totalHarga; });
+
+        html += `
+          <div style="background:#fff3cd; border:1px solid #ffeeba; padding:6px 10px; border-radius:5px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <b>${h.label}</b> (${h.items.length} item) - Rp ${totalHold.toLocaleString('id-ID')}
+            </div>
+            <button type="button" class="btn btn-warning" onclick="unholdTransaksi(${i})" style="padding:3px 8px; font-size:11px;">▶️ Buka Keranjang</button>
+          </div>
+        `;
+      }
+      box.innerHTML = html;
+    }
+
+    function unholdTransaksi(idx) {
+      if (cart.length > 0) {
+        if (!confirm('Keranjang saat ini masih terisi. Yakin ingin menimpa keranjang dengan transaksi yang ditahan?')) {
+          return;
+        }
+      }
+
+      cart = JSON.parse(JSON.stringify(holdList[idx].items));
+      holdList.splice(idx, 1);
+      renderKeranjang();
+      renderHoldList();
+    }
+
+    /* PROSES SIMPAN TRANSAKSI KE GOOGLE SHEETS & BLUETOOTH PRINT */
     async function prosesTransaksi(isPrint) {
       var scriptUrl = document.getElementById('scriptUrl').value.trim();
       if (!scriptUrl) { alert('URL Apps Script belum diisi!'); return; }
       if (cart.length === 0) { alert('Keranjang belanjaan masih kosong!'); return; }
 
-      // SAFETY: Disable tombol agar admin tidak bisa klik 2x
       var btn1 = document.getElementById('btnSimpanSaja');
       var btn2 = document.getElementById('btnSimpanCetak');
       btn1.disabled = true;
@@ -443,17 +533,17 @@
       var total = 0;
       for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
 
+      var metodeBayar = document.getElementById('selectMetodeBayar').value;
       var bayar = parseFloat(document.getElementById('inputBayar').value) || 0;
       var kembalian = bayar - total;
 
       var noTrx = "TRX-" + Date.now().toString().slice(-6);
       var today = new Date().toISOString().split('T')[0];
 
-      // PERINTAH CETAK BLUETOOTH
+      // CETAK PRINTER BLUETOOTH
       if (isPrint) {
         if (!btCharacteristic) {
-          alert('Printer Bluetooth belum terhubung! Silakan klik tombol "🔵 Hubungkan Printer BT" di kanan atas.');
-          // Restore tombol jika gagal
+          alert('Printer Bluetooth belum terhubung! Silakan klik "🔵 Hubungkan Printer BT" di kanan atas.');
           btn1.disabled = false; btn2.disabled = false;
           btn1.innerText = '💾 Simpan Saja'; btn2.innerText = '🖨️ Cetak BT & Simpan';
           return;
@@ -463,8 +553,9 @@
         textToPrint += "\x1B\x61\x01";
         textToPrint += "TOKO FEBY\nSembako, LPG & Kelontong\n--------------------------------\n";
         textToPrint += "\x1B\x61\x00";
-        textToPrint += `No : ${noTrx}\n`;
-        textToPrint += `Tgl: ${today} ${new Date().toLocaleTimeString('id-ID')}\n`;
+        textToPrint += `No   : ${noTrx}\n`;
+        textToPrint += `Tgl  : ${today} ${new Date().toLocaleTimeString('id-ID')}\n`;
+        textToPrint += `Bayar: ${metodeBayar}\n`;
         textToPrint += "--------------------------------\n";
 
         for (var i = 0; i < cart.length; i++) {
@@ -494,11 +585,12 @@
         }
       }
 
-      // SIMPAN DATA PENJUALAN KE GOOGLE SHEETS
+      // SIMPAN DATA KE GOOGLE SHEETS
       var payload = {
         action: "penjualan",
         noTransaksi: noTrx,
         tanggal: today,
+        metodeBayar: metodeBayar,
         items: cart
       };
 
@@ -509,7 +601,7 @@
         body: JSON.stringify(payload)
       })
       .then(function() {
-        alert('Transaksi Kasir Berhasil Disimpan!');
+        alert('Transaksi Kasir (' + metodeBayar + ') Berhasil Disimpan!');
         cart = [];
         renderKeranjang();
         document.getElementById('inputBayar').value = '';
@@ -520,7 +612,6 @@
         alert('Gagal menyimpan transaksi.');
       })
       .finally(function() {
-        // Kembalikan status tombol setelah proses selesai
         btn1.disabled = false;
         btn2.disabled = false;
         btn1.innerText = '💾 Simpan Saja';
