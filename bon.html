@@ -8,7 +8,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
     header { background-color: #0f172a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .container { max-width: 900px; margin: 15px auto; padding: 0 12px; }
+    .container { max-width: 950px; margin: 15px auto; padding: 0 12px; }
     
     .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .title { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
@@ -18,10 +18,11 @@
     td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
     
     .badge-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+    .badge-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
     .badge-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
     
-    .btn-lunas { background: #16a34a; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
-    .btn-lunas:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-lunas { background: #16a34a; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; }
+    .btn-cicil { background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; margin-right: 4px; }
   </style>
 </head>
 <body>
@@ -36,7 +37,7 @@
   <div class="container">
     <div class="card">
       <div class="title" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>📋 Daftar Piutang (Tab: Hutang_Pelanggan)</span>
+        <span>📋 Daftar Piutang Pelanggan</span>
         <button type="button" onclick="loadDataBon()" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">🔄 Refresh Data</button>
       </div>
 
@@ -48,13 +49,14 @@
               <th>Nama Pelanggan</th>
               <th>Rincian Barang</th>
               <th>Total Bon</th>
+              <th>Sisa Hutang</th>
               <th>Status</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody id="tableBonBody">
             <tr>
-              <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data bon...</td>
+              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data bon...</td>
             </tr>
           </tbody>
         </table>
@@ -72,11 +74,11 @@
       var tbody = document.getElementById('tableBonBody');
 
       if (!scriptUrl) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data dari sheet Hutang_Pelanggan...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data dari sheet Hutang_Pelanggan...</td></tr>';
 
       fetch(scriptUrl + '?action=get_bon')
         .then(function(res) { return res.json(); })
@@ -84,12 +86,12 @@
           if (res.result === 'success') {
             renderTableBon(res.data);
           } else {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data bon.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data bon.</td></tr>';
           }
         })
         .catch(function(err) {
           console.error(err);
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">Gagal memuat data. Pastikan Apps Script sudah re-deploy.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Gagal memuat data.</td></tr>';
         });
     }
 
@@ -98,7 +100,7 @@
       tbody.innerHTML = '';
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada catatan bon di sheet Hutang_Pelanggan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada catatan bon.</td></tr>';
         return;
       }
 
@@ -106,11 +108,20 @@
 
       for (var i = 0; i < data.length; i++) {
         var item = data[i];
-        var isBelumLunas = (item.status && item.status.toString().toUpperCase() === 'BELUM LUNAS');
-        var badge = isBelumLunas ? '<span class="badge-danger">BELUM LUNAS</span>' : '<span class="badge-success">LUNAS</span>';
+        var totalBon = parseFloat(item.totalBon || 0);
+        var sisaHutang = item.sisaBon !== undefined && item.sisaBon !== "" ? parseFloat(item.sisaBon) : totalBon;
+        var statusTxt = (item.status || 'BELUM LUNAS').toString().toUpperCase();
+
+        var badge = '<span class="badge-danger">BELUM LUNAS</span>';
+        if (statusTxt === 'LUNAS' || sisaHutang <= 0) {
+          badge = '<span class="badge-success">LUNAS</span>';
+        } else if (statusTxt === 'CICILAN') {
+          badge = '<span class="badge-warning">DICICIL</span>';
+        }
         
-        var btnAksi = isBelumLunas 
-          ? `<button type="button" class="btn-lunas" onclick="pelunasanBon('${item.noTransaksi}', '${item.namaPelanggan}', ${item.totalBon})">✅ Lunasi</button>`
+        var btnAksi = (statusTxt !== 'LUNAS' && sisaHutang > 0)
+          ? `<button type="button" class="btn-cicil" onclick="bayarSebagian('${item.noTransaksi}', '${item.namaPelanggan}', ${sisaHutang})">💵 Cicil</button>` +
+            `<button type="button" class="btn-lunas" onclick="pelunasanBon('${item.noTransaksi}', '${item.namaPelanggan}', ${sisaHutang})">✅ Lunas</button>`
           : '<span style="color: #16a34a; font-weight: bold;">Selesai</span>';
 
         var tglFormatted = typeof item.tanggal === 'string' ? item.tanggal.substring(0, 10) : item.tanggal;
@@ -119,8 +130,9 @@
           <tr>
             <td><b>${item.noTransaksi}</b><br><small style="color: #64748b;">${tglFormatted}</small></td>
             <td><b>${item.namaPelanggan || 'Tanpa Nama'}</b></td>
-            <td style="max-width: 200px;">${item.rincianBarang || '-'}</td>
-            <td style="font-weight: bold; color: #0f172a;">Rp ${parseFloat(item.totalBon || 0).toLocaleString('id-ID')}</td>
+            <td style="max-width: 180px;">${item.rincianBarang || '-'}</td>
+            <td style="color: #64748b;">Rp ${totalBon.toLocaleString('id-ID')}</td>
+            <td style="font-weight: bold; color: #dc2626;">Rp ${sisaHutang.toLocaleString('id-ID')}</td>
             <td>${badge}</td>
             <td>${btnAksi}</td>
           </tr>
@@ -128,15 +140,32 @@
       }
     }
 
-    function pelunasanBon(noTrx, nama, total) {
-      if (!confirm(`Konfirmasi Pelunasan:\n\nPelanggan: ${nama}\nTotal Bon: Rp ${parseFloat(total).toLocaleString('id-ID')}\n\nYakin transaksi ini sudah LUNAS dibayar?`)) {
+    function bayarSebagian(noTrx, nama, sisaCurrent) {
+      var nominal = prompt(`BAYAR CICILAN BON\n\nPelanggan: ${nama}\nSisa Hutang: Rp ${sisaCurrent.toLocaleString('id-ID')}\n\nMasukkan nominal pembayaran:`, '');
+      if (nominal !== null && nominal.trim() !== '') {
+        var bayarVal = parseFloat(nominal);
+        if (isNaN(bayarVal) || bayarVal <= 0) {
+          alert('Nominal pembayaran tidak valid!');
+          return;
+        }
+
+        prosesBayarBon(noTrx, bayarVal);
+      }
+    }
+
+    function pelunasanBon(noTrx, nama, sisaCurrent) {
+      if (!confirm(`Konfirmasi Pelunasan Full:\n\nPelanggan: ${nama}\nSisa Hutang: Rp ${sisaCurrent.toLocaleString('id-ID')}\n\nYakin transaksi ini sudah LUNAS seluruhnya?`)) {
         return;
       }
+      prosesBayarBon(noTrx, sisaCurrent);
+    }
 
+    function prosesBayarBon(noTrx, nominalBayar) {
       var scriptUrl = localStorage.getItem('gas_script_url');
       var payload = {
         action: "lunasi_bon",
-        noTransaksi: noTrx
+        noTransaksi: noTrx,
+        bayarCicil: nominalBayar
       };
 
       fetch(scriptUrl, {
@@ -146,12 +175,12 @@
         body: JSON.stringify(payload)
       })
       .then(function() {
-        alert('Status Bon Berhasil Diubah Menjadi LUNAS!');
+        alert('Pembayaran Bon Berhasil Diperbarui!');
         loadDataBon();
       })
       .catch(function(err) {
         console.error(err);
-        alert('Gagal mengupdate status pelunasan.');
+        alert('Gagal mengupdate pembayaran bon.');
       });
     }
   </script>
