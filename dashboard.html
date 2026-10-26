@@ -142,9 +142,26 @@
             renderTable(masterBarang);
             
             document.getElementById('statTotalItems').innerText = masterBarang.length;
-            if (masterBarang.length > 0) {
-              document.getElementById('statLastUpdate').innerText = masterBarang[masterBarang.length - 1].tanggal || '-';
+          if (masterBarang.length > 0) {
+          var rawDate = masterBarang[masterBarang.length - 1].tanggal;
+          if (rawDate) {
+            var d = new Date(rawDate);
+            if (!isNaN(d.getTime())) {
+              // Format jadi: DD-MM-YYYY HH:mm WIB
+              var tgl = String(d.getDate()).padStart(2, '0');
+              var bln = String(d.getMonth() + 1).padStart(2, '0');
+              var thn = d.getFullYear();
+              var jam = String(d.getHours()).padStart(2, '0');
+              var mnt = String(d.getMinutes()).padStart(2, '0');
+              
+              document.getElementById('statLastUpdate').innerText = tgl + '-' + bln + '-' + thn + ' ' + jam + ':' + mnt + ' WIB';
+            } else {
+              document.getElementById('statLastUpdate').innerText = rawDate;
             }
+          } else {
+            document.getElementById('statLastUpdate').innerText = '-';
+          }
+        }
           } else {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red; padding: 20px;">Gagal mengambil data: ' + response.message + '</td></tr>';
           }
