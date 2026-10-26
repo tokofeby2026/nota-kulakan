@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kasir Penjualan - Toko Feby</title>
-  <!-- Library Scanner Barcode Kamera -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
@@ -23,7 +21,6 @@
     .btn-primary { background: #0284c7; color: white; }
     .btn-success { background: #059669; color: white; font-size: 15px; padding: 12px; }
     .btn-danger { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; width: auto; border-radius: 4px; }
-    .btn-scan { background: #6366f1; color: white; margin-bottom: 8px; }
     
     .cart-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
     .cart-table th { background: #f8fafc; padding: 8px; text-align: left; border-bottom: 2px solid #e2e8f0; }
@@ -31,43 +28,32 @@
     
     .total-box { background: #0f172a; color: white; padding: 15px; border-radius: 8px; margin-top: 15px; }
     .total-amount { font-size: 26px; font-weight: bold; color: #38bdf8; text-align: right; margin-top: 4px; }
-
-    /* LAYOUT KHUSUS STRUK PRINTER THERMAL (58mm) */
-    @media print {
-      body * { visibility: hidden; }
-      #strukArea, #strukArea * { visibility: visible; }
-      #strukArea { position: absolute; left: 0; top: 0; width: 58mm; font-family: monospace; font-size: 10px; color: #000; }
-      .no-print { display: none !important; }
-    }
   </style>
 </head>
 <body>
 
-  <header class="no-print">
+  <header>
     <div>
       <a href="index.html" style="color: #93c5fd; text-decoration: none; font-size: 12px; font-weight: bold;">🏠 Menu Utama</a>
       <h2 style="font-size: 18px; margin-top: 2px;">🛒 Kasir Penjualan Toko Feby</h2>
     </div>
   </header>
 
-  <div style="max-width: 1100px; margin: 10px auto; padding: 0 12px;" class="no-print">
+  <div style="max-width: 1100px; margin: 10px auto; padding: 0 12px;">
     <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 8px 12px; border-radius: 6px;">
       <label style="color: #92400e;">URL Google Apps Script:</label>
       <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
     </div>
   </div>
 
-  <div class="container no-print">
+  <div class="container">
     
-    <!-- KOLOM KARI: SCAN & PILIH BARANG -->
+    <!-- KOLOM KIRI: PILIH BARANG -->
     <div class="card">
-      <div class="card-title">🔍 Scan Barcode & Pilih Barang</div>
+      <div class="card-title">🔍 Pilih Barang Belanjaan</div>
       
-      <button type="button" class="btn btn-scan" onclick="toggleScanner()">📷 Buka Kamera Scanner Barcode</button>
-      <div id="reader" style="width: 100%; display: none; margin-bottom: 10px;"></div>
-
       <div style="margin-bottom: 10px;">
-        <label>Atau Cari Manual / Pilih Dari Master Data:</label>
+        <label>Cari Barang / Pilih Dari Master Data:</label>
         <select id="selectBarang" onchange="pilihBarang()">
           <option value="">-- Muat data barang... --</option>
         </select>
@@ -79,7 +65,9 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
           <div>
             <label>Satuan Jual:</label>
-            <select id="selectSatuanJual" onchange="updateHargaSatuan()"></select>
+            <select id="selectSatuanJual" onchange="updateHargaSatuan()">
+              <!-- Option diisi via JS -->
+            </select>
           </div>
           <div>
             <label>Harga Satuan (Rp):</label>
@@ -139,38 +127,15 @@
         </div>
       </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
-  <button type="button" class="btn" onclick="prosesTransaksi(false)" style="background: #475569; color: white;">💾 Simpan Saja</button>
-  <button type="button" class="btn btn-success" onclick="prosesTransaksi(true)">🖨️ Simpan & Cetak</button>
-</div>
+      <button type="button" class="btn btn-success" onclick="simpanTransaksi()" style="margin-top: 12px;">💾 Simpan Transaksi Penjualan</button>
     </div>
 
-  </div>
-
-  <!-- CONTAINER STRUK THERMAL (UNTUK PRINTER) -->
-  <div id="strukArea" style="display: none;">
-    <div style="text-align: center; margin-bottom: 5px;">
-      <b>TOKO FEBY</b><br>
-      Sembako, LPG & Kelontong<br>
-      --------------------------------
-    </div>
-    <div id="strukMeta"></div>
-    --------------------------------<br>
-    <div id="strukItems"></div>
-    --------------------------------<br>
-    <div id="strukTotal"></div>
-    --------------------------------<br>
-    <div style="text-align: center; margin-top: 5px;">
-      Terima Kasih Atas Kunjungan Anda!<br>
-      Barang Yang Sudah Dibeli<br>Tidak Dapat Ditukar/Dikembalikan
-    </div>
   </div>
 
   <script>
     var masterBarang = [];
     var cart = [];
     var selectedItemData = null;
-    var html5QrcodeScanner = null;
 
     window.onload = function() {
       var savedUrl = localStorage.getItem('gas_script_url');
@@ -202,45 +167,6 @@
         .catch(function(err) { console.error(err); });
     }
 
-    /* SISTEM SCANNER BARCODE */
-    function toggleScanner() {
-      var readerDiv = document.getElementById('reader');
-      if (readerDiv.style.display === 'none') {
-        readerDiv.style.display = 'block';
-        html5QrcodeScanner = new Html5Qrcode("reader");
-        html5QrcodeScanner.start(
-          { facingMode: "environment" }, 
-          { fps: 10, qrbox: { width: 250, height: 150 } },
-          onScanSuccess
-        );
-      } else {
-        stopScanner();
-      }
-    }
-
-    function stopScanner() {
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.stop().then(function() {
-          document.getElementById('reader').style.display = 'none';
-        });
-      }
-    }
-
-    function onScanSuccess(decodedText) {
-      stopScanner();
-      // Cari nama barang berdasarkan teks barcode yang tersimpan/cocok
-      var foundIdx = masterBarang.findIndex(function(b) {
-        return b.namaBarang.toLowerCase().includes(decodedText.toLowerCase());
-      });
-
-      if (foundIdx !== -1) {
-        document.getElementById('selectBarang').value = foundIdx;
-        pilihBarang();
-      } else {
-        alert('Barcode scanned: ' + decodedText + '\nBarang tidak ditemukan di Master Data!');
-      }
-    }
-
     function pilihBarang() {
       var idx = document.getElementById('selectBarang').value;
       if (idx === '') {
@@ -254,9 +180,11 @@
       var selectSatuan = document.getElementById('selectSatuanJual');
       selectSatuan.innerHTML = '';
 
+      // Opsi 1: Kemasan Utama (Bks/Pcs/Kg)
       var hargaUtama = parseFloat(selectedItemData.jualKemasanUtama) || 0;
       selectSatuan.innerHTML += `<option value="${hargaUtama}">Kemasan Utama (Rp ${hargaUtama.toLocaleString('id-ID')})</option>`;
 
+      // Opsi 2: Ketengan Mikro (Batang / ¼ Kg) jika ada
       var labelMicro = selectedItemData.labelPecahan;
       var hargaMicro = parseFloat(selectedItemData.jualEceranKecil) || 0;
       if (labelMicro && labelMicro !== 'Tidak Dipecah' && hargaMicro > 0) {
@@ -349,75 +277,40 @@
       }
     }
 
-    /* PROSES SIMPAN KE GOOGLE SHEET (DENGAN / TANPA PRINT) */
-function prosesTransaksi(isPrint) {
-  var scriptUrl = document.getElementById('scriptUrl').value.trim();
-  if (!scriptUrl) { alert('URL Apps Script belum diisi!'); return; }
-  if (cart.length === 0) { alert('Keranjang belanjaan masih kosong!'); return; }
+    function simpanTransaksi() {
+      var scriptUrl = document.getElementById('scriptUrl').value.trim();
+      if (!scriptUrl) { alert('URL Apps Script belum diisi!'); return; }
+      if (cart.length === 0) { alert('Keranjang belanjaan masih kosong!'); return; }
 
-  var total = 0;
-  for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
+      var total = 0;
+      for (var i = 0; i < cart.length; i++) { total += cart[i].totalHarga; }
 
-  var bayar = parseFloat(document.getElementById('inputBayar').value) || 0;
-  var kembalian = bayar - total;
+      var today = new Date().toISOString().split('T')[0];
+      var payload = {
+        action: "penjualan",
+        noTransaksi: "TRX-" + Date.now().toString().slice(-6),
+        tanggal: today,
+        items: cart
+      };
 
-  var noTrx = "TRX-" + Date.now().toString().slice(-6);
-  var today = new Date().toISOString().split('T')[0];
-
-  // JIKA PILIH PRINT STRUK
-  if (isPrint) {
-    document.getElementById('strukMeta').innerHTML = `
-      No : ${noTrx}<br>
-      Tgl: ${today} ${new Date().toLocaleTimeString('id-ID')}
-    `;
-
-    var itemsHtml = '';
-    for (var i = 0; i < cart.length; i++) {
-      var itm = cart[i];
-      itemsHtml += `
-        ${itm.namaBarang}<br>
-        ${itm.qty} x ${itm.hargaSatuan.toLocaleString('id-ID')} = Rp ${itm.totalHarga.toLocaleString('id-ID')}<br>
-      `;
+      fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function() {
+        alert('Transaksi Kasir Berhasil Disimpan!');
+        cart = [];
+        renderKeranjang();
+        document.getElementById('inputBayar').value = '';
+        document.getElementById('displayKembalian').value = 'Rp 0';
+      })
+      .catch(function(err) {
+        console.error(err);
+        alert('Gagal menyimpan transaksi.');
+      });
     }
-    document.getElementById('strukItems').innerHTML = itemsHtml;
-
-    document.getElementById('strukTotal').innerHTML = `
-      TOTAL    : Rp ${total.toLocaleString('id-ID')}<br>
-      BAYAR    : Rp ${bayar.toLocaleString('id-ID')}<br>
-      KEMBALI  : Rp ${(kembalian >= 0 ? kembalian : 0).toLocaleString('id-ID')}
-    `;
-
-    document.getElementById('strukArea').style.display = 'block';
-    window.print();
-    document.getElementById('strukArea').style.display = 'none';
-  }
-
-  // SIMPAN KE GOOGLE SHEETS
-  var payload = {
-    action: "penjualan",
-    noTransaksi: noTrx,
-    tanggal: today,
-    items: cart
-  };
-
-  fetch(scriptUrl, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
-  .then(function() {
-    alert('Transaksi Berhasil Disimpan!');
-    cart = [];
-    renderKeranjang();
-    document.getElementById('inputBayar').value = '';
-    document.getElementById('displayKembalian').value = 'Rp 0';
-  })
-  .catch(function(err) {
-    console.error(err);
-    alert('Gagal menyimpan ke Google Sheet.');
-  });
-}
   </script>
 </body>
 </html>
