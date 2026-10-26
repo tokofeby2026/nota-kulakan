@@ -36,7 +36,7 @@
   <div class="container">
     <div class="card">
       <div class="title" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>📋 Daftar Piutang / Bon Pelanggan</span>
+        <span>📋 Daftar Piutang (Tab: Hutang_Pelanggan)</span>
         <button type="button" onclick="loadDataBon()" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">🔄 Refresh Data</button>
       </div>
 
@@ -76,18 +76,20 @@
         return;
       }
 
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data bon...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data dari sheet Hutang_Pelanggan...</td></tr>';
 
       fetch(scriptUrl + '?action=get_bon')
         .then(function(res) { return res.json(); })
         .then(function(res) {
           if (res.result === 'success') {
             renderTableBon(res.data);
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data bon.</td></tr>';
           }
         })
         .catch(function(err) {
           console.error(err);
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">Gagal memuat data.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">Gagal memuat data. Pastikan Apps Script sudah re-deploy.</td></tr>';
         });
     }
 
@@ -96,7 +98,7 @@
       tbody.innerHTML = '';
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Tidak ada catatan bon.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada catatan bon di sheet Hutang_Pelanggan.</td></tr>';
         return;
       }
 
@@ -104,7 +106,7 @@
 
       for (var i = 0; i < data.length; i++) {
         var item = data[i];
-        var isBelumLunas = (item.status === 'BELUM LUNAS');
+        var isBelumLunas = (item.status && item.status.toString().toUpperCase() === 'BELUM LUNAS');
         var badge = isBelumLunas ? '<span class="badge-danger">BELUM LUNAS</span>' : '<span class="badge-success">LUNAS</span>';
         
         var btnAksi = isBelumLunas 
@@ -116,8 +118,8 @@
         tbody.innerHTML += `
           <tr>
             <td><b>${item.noTransaksi}</b><br><small style="color: #64748b;">${tglFormatted}</small></td>
-            <td><b>${item.namaPelanggan}</b></td>
-            <td style="max-width: 200px;">${item.rincianBarang}</td>
+            <td><b>${item.namaPelanggan || 'Tanpa Nama'}</b></td>
+            <td style="max-width: 200px;">${item.rincianBarang || '-'}</td>
             <td style="font-weight: bold; color: #0f172a;">Rp ${parseFloat(item.totalBon || 0).toLocaleString('id-ID')}</td>
             <td>${badge}</td>
             <td>${btnAksi}</td>
