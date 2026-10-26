@@ -12,8 +12,13 @@
     header h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
     header p { font-size: 13px; color: #a5b4fc; margin-top: 5px; }
     
-    .container { max-width: 800px; margin: 30px auto; padding: 0 20px; width: 100%; }
+    .container { max-width: 800px; margin: 20px auto; padding: 0 20px; width: 100%; }
     
+    /* SETTING URL BOX */
+    .config-box { background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .config-status { font-size: 12px; font-weight: bold; }
+    .btn-config { background: #312e81; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
     .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
     
     .menu-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; text-decoration: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
@@ -23,12 +28,10 @@
     .bg-blue { background: #e0e7ff; color: #4338ca; }
     .bg-emerald { background: #d1fae5; color: #059669; }
     .bg-amber { background: #fef3c7; color: #d97706; }
-    .bg-slate { background: #f1f5f9; color: #64748b; }
+    .bg-purple { background: #f3e8ff; color: #7e22ce; }
     
     .menu-title { font-size: 16px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
     .menu-desc { font-size: 12px; color: #64748b; line-height: 1.4; }
-    
-    .badge-dev { position: absolute; top: 12px; right: 12px; font-size: 9px; font-weight: bold; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; }
     
     footer { text-align: center; padding: 20px; font-size: 12px; color: #94a3b8; }
   </style>
@@ -41,6 +44,16 @@
   </header>
 
   <div class="container">
+    
+    <!-- BOX PENGATURAN SYSTEM URL (PUSAT) -->
+    <div class="config-box">
+      <div>
+        <span style="font-size: 11px; color: #64748b; display: block;">KONEKSI DATABASE GOOGLE SHEET:</span>
+        <span id="txtStatusUrl" class="config-status" style="color: #ef4444;">🔴 Belum Dihubungkan</span>
+      </div>
+      <button type="button" class="btn-config" onclick="settingUrl()">⚙️ Setting URL Script</button>
+    </div>
+
     <div class="menu-grid">
       
       <!-- Menu 1: Input Kulakan -->
@@ -62,37 +75,57 @@
       </a>
 
       <!-- Menu 3: Kasir Penjualan -->
-<a href="kasir.html" class="menu-card">
-  <div>
-    <div class="icon-box bg-amber">🛒</div>
-    <div class="menu-title">POS / Kasir Penjualan</div>
-    <div class="menu-desc">Form transaksi penjualan harian untuk hitung total belanjaan pembeli.</div>
-  </div>
-</a>
-
-      <!-- Menu 4: Laporan & Keuangan (Menu Masa Depan) -->
-      <a href="#" onclick="alert('Menu Laporan Keuangan sedang dirancang!')" class="menu-card">
-        <span class="badge-dev">Segera Hadir</span>
+      <a href="kasir.html" class="menu-card">
         <div>
-          <div class="icon-box bg-slate">📈</div>
-          <div class="menu-title">Laporan Keuangan</div>
-          <div class="menu-desc">Rekapitulasi omset harian, total modal kulakan, dan estimasi keuntungan toko.</div>
+          <div class="icon-box bg-amber">🛒</div>
+          <div class="menu-title">POS / Kasir Penjualan</div>
+          <div class="menu-desc">Form transaksi penjualan harian, scan barcode, dan cetak struk thermal.</div>
         </div>
       </a>
-      <!-- Menu Buku Bon -->
+
+      <!-- Menu 4: Buku Bon -->
       <a href="bon.html" class="menu-card">
         <div>
-          <div class="icon-box bg-amber">📝</div>
+          <div class="icon-box bg-purple">📝</div>
           <div class="menu-title">Buku Bon & Piutang</div>
           <div class="menu-desc">Cek daftar hutang pelanggan dan catat pelunasan bon transaksi.</div>
         </div>
       </a>
+
     </div>
   </div>
 
   <footer>
     Toko Feby &copy; 2026 — Integrated POS & Inventory System
   </footer>
+
+  <script>
+    window.onload = function() {
+      cekStatusUrl();
+    };
+
+    function cekStatusUrl() {
+      var savedUrl = localStorage.getItem('gas_script_url');
+      var txt = document.getElementById('txtStatusUrl');
+      if (savedUrl && savedUrl.trim() !== '') {
+        txt.innerText = '🟢 Terhubung ke Google Sheet';
+        txt.style.color = '#059669';
+      } else {
+        txt.innerText = '🔴 Belum Dihubungkan';
+        txt.style.color = '#ef4444';
+      }
+    }
+
+    function settingUrl() {
+      var currentUrl = localStorage.getItem('gas_script_url') || '';
+      var newUrl = prompt('Masukkan URL Google Apps Script Toko Feby:', currentUrl);
+      if (newUrl !== null && newUrl.trim() !== '') {
+        localStorage.setItem('gas_script_url', newUrl.trim());
+        cekStatusUrl();
+        alert('URL Database Apps Script berhasil disimpan!');
+      }
+    }
+  </script>
 
 </body>
 </html>
