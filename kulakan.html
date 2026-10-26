@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Nota Kulakan & Scan Barcode</title>
+  <title>Form Nota Kulakan & Scan Barcode - Toko Feby</title>
+  <!-- Library Scanner Barcode -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background-color: #f1f5f9; padding: 15px; color: #334155; }
-    .box { background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; padding: 15px; color: #334155; padding-bottom: 40px; }
+    header { background-color: #0f172a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-radius: 8px; }
+    .box { background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .title { font-weight: bold; font-size: 15px; margin-bottom: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
     label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #475569; }
@@ -27,13 +29,379 @@
 </head>
 <body>
 
-  <div style="margin-bottom: 10px;">
-    <a href="index.html" style="display: inline-block; background: #334155; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;">
-      🏠 Kembali ke Menu Utama
-    </a>
+  <header>
+    <div>
+      <a href="index.html" style="color: #93c5fd; text-decoration: none; font-size: 12px; font-weight: bold;">🏠 Menu Utama</a>
+      <h2 style="font-size: 18px; margin-top: 2px;">🛒 Form Kulakan & Scan Barcode</h2>
+    </div>
+  </header>
+
+  <!-- Area Scanner Modal -->
+  <div id="scannerModal" style="display:none; background: rgba(0,0,0,0.8); position: fixed; top:0; left:0; width:100%; height:100%; z-index:999; padding:20px;">
+    <div style="background:white; max-width:400px; margin: 40px auto; padding:15px; border-radius:10px; text-align:center;">
+      <h3 style="margin-bottom:10px;">📷 Scan Barcode Produk</h3>
+      <div id="reader" style="width:100%;"></div>
+      <button type="button" class="btn btn-hapus" onclick="closeScanner()" style="float:none; margin-top:15px; width:100%; padding:10px; font-size:13px;">Batal / Tutup</button>
+    </div>
   </div>
 
-  <h2 style="text-align: center; margin-bottom: 15px;">🛒 Form Kulakan & Scan Barcode</h2>
+  <form id="notaForm" onsubmit="return false;">
+    
+    <!-- Header Nota -->
+    <div class="box">
+      <div class="title">🧾 Header Nota Pembelian</div>
+      <div class="grid">
+        <div>
+          <label>No. Nota / Faktur</label>
+          <input type="text" id="noNota">
+        </div>
+        <div>
+          <label>Tanggal Belanja</label>
+          <input type="date" id="tglNota">
+        </div>
+        <div>
+          <label>Nama Supplier</label>
+          <input type="text" id="supplier" placeholder="Agen / Distributor / Grosir">
+        </div>
+        <div>
+          <label>Metode Bayar</label>
+          <select id="metodeBayar">
+            <option value="Tunai">Tunai</option>
+            <option value="Transfer">Transfer</option>
+            <option value="Tempo">Tempo / Hutang</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
-  <div id="scannerModal" style="display:none; background: rgba(0,0,0,0.8); position: fixed; top:0; left:0; width:100%; height:100%; z-index:999; padding:20px;">
-    <div style="background:white; max-width:400px; margin: 40px auto; padding:15px; border-radius:1
+    <!-- Daftar Barang -->
+    <div class="box">
+      <div class="title">📦 Detail Barang & Hitungan Ketengan</div>
+      
+      <div id="containerBarang"></div>
+
+      <button type="button" class="btn btn-tambah" onclick="tambahBarang()">+ TAMBAH BARANG</button>
+    </div>
+
+    <!-- Catatan & Total -->
+    <div class="box">
+      <label>Catatan Nota</label>
+      <textarea id="catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
+      <div style="margin-top: 10px;">
+        <label>TOTAL NOTA BELANJA:</label>
+        <div class="total-display" id="displayTotal">Rp 0</div>
+      </div>
+    </div>
+
+    <!-- Tombol Aksi -->
+    <div class="grid" style="grid-template-columns: 1fr 2fr;">
+      <button type="button" class="btn btn-reset" onclick="resetForm()">🔄 Reset</button>
+      <button type="button" class="btn btn-simpan" id="btnSimpan" onclick="simpanKeGoogleSheet()">☁️ Simpan ke Google Sheet</button>
+    </div>
+
+  </form>
+
+  <script>
+    var countBarang = 0;
+    var activeScanId = null;
+    var html5QrcodeScanner = null;
+
+    function tambahBarang() {
+      countBarang++;
+      var id = countBarang;
+      var container = document.getElementById('containerBarang');
+
+      var div = document.createElement('div');
+      div.id = 'item-' + id;
+      div.className = 'item-card';
+
+      div.innerHTML = `
+        <button type="button" class="btn btn-hapus" onclick="hapusBarang(${id})">🗑️ Hapus</button>
+        <div style="font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #4338ca;">Item #${id}</div>
+        
+        <div class="grid" style="grid-template-columns: 2fr 1.5fr 1fr; margin-bottom: 8px;">
+          <div>
+            <label>Nama Barang</label>
+            <input type="text" id="namaBarang-${id}" placeholder="Contoh: Ultramilk / Djarum Super">
+          </div>
+          <div>
+            <label>Barcode Produk</label>
+            <div style="display:flex; gap:4px;">
+              <input type="text" id="barcode-${id}" placeholder="Scan/ketik barcode">
+              <button type="button" class="btn btn-scan" onclick="openScanner(${id})">📷 Scan</button>
+            </div>
+          </div>
+          <div>
+            <label>Total Beli Nota (Rp)</label>
+            <input type="number" id="hargaBeliTotal-${id}" oninput="hitungRow(${id})" placeholder="0">
+          </div>
+        </div>
+
+        <!-- Input Qty Utama -->
+        <div style="background: #e0e7ff; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+          <div class="grid">
+            <div>
+              <label>Qty Beli (Dus/Bal/Pres)</label>
+              <input type="number" id="qtyUtama-${id}" oninput="hitungRow(${id})" value="1" min="1">
+            </div>
+            <div>
+              <label>Isi Kemasan per Qty Utama</label>
+              <input type="number" id="isiPerUtama-${id}" oninput="hitungRow(${id})" value="24" min="1">
+            </div>
+            <div>
+              <label>Nama Satuan Utama</label>
+              <select id="namaKemasanUtama-${id}" onchange="hitungRow(${id})">
+                <option value="Pcs/Bks">Pcs / Bungkus</option>
+                <option value="Kg">Kg (Kilogram)</option>
+                <option value="Liter">Liter</option>
+                <option value="Botol">Botol</option>
+                <option value="Kotak">Kotak / UHT</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 1: UTAMA -->
+        <div class="tier-box">
+          <div style="margin-bottom: 4px;"><span class="badge" style="background:#0284c7;">HARGA UTAMA (PER PCS / BKS / KG)</span></div>
+          <div class="grid">
+            <div><label>Total Qty Utama</label><input type="number" id="totalKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold;"></div>
+            <div><label>HPP / Satuan</label><input type="text" id="hppKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold; color:#4338ca;"></div>
+            <div><label>Margin (%)</label><input type="number" id="marginKemasanUtama-${id}" oninput="hitungRow(${id})" value="10"></div>
+            <div><label>Harga Jual / Satuan</label><input type="number" id="jualKemasanUtama-${id}" style="background:#ecfdf5; font-weight:bold; color:#065f46;"></div>
+          </div>
+        </div>
+
+        <!-- LEVEL 2: PECAHAN KETENGAN -->
+        <div class="tier-box">
+          <div style="margin-bottom: 4px;"><span class="badge" style="background:#d97706;">KETENGAN MIKRO / ECERAN KECIL</span></div>
+          <div class="grid" style="margin-bottom: 5px;">
+            <div style="grid-column: span 2;">
+              <label>Pecahan Ketengan:</label>
+              <select id="selectPecahan-${id}" onchange="pilihPreset(${id})">
+                <option value="1">1 (Kosong / Tidak Dipecah)</option>
+                <option value="12">12 (Rokok 12 Batang)</option>
+                <option value="16">16 (Rokok 16 Batang)</option>
+                <option value="20">20 (Rokok 20 Batang)</option>
+                <option value="4">4 (Minyak ¼ Kg)</option>
+                <option value="2">2 (Minyak ½ Kg)</option>
+                <option value="custom">Ketik Jumlah Bebas...</option>
+              </select>
+            </div>
+            <div>
+              <label>Jumlah Pecahan</label>
+              <input type="number" id="jenisPecahan-${id}" oninput="hitungRow(${id})" value="1" min="1">
+            </div>
+            <div>
+              <label>Label Ketengan</label>
+              <input type="text" id="labelPecahan-${id}" placeholder="Batang / ¼ Kg / Pcs">
+            </div>
+          </div>
+
+          <div class="grid" id="boxEceranKecil-${id}">
+            <div><label>Total Ketengan</label><input type="number" id="totalEceranKecil-${id}" readonly style="background:#f1f5f9; font-weight:bold;"></div>
+            <div><label>HPP Ketengan</label><input type="text" id="hppEceranKecil-${id}" readonly style="background:#f1f5f9; font-weight:bold; color:#4338ca;"></div>
+            <div><label>Margin (%)</label><input type="number" id="marginEceranKecil-${id}" oninput="hitungRow(${id})" value="20"></div>
+            <div><label>Harga Jual Ketengan</label><input type="number" id="jualEceranKecil-${id}" style="background:#ecfdf5; font-weight:bold; color:#065f46;"></div>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(div);
+      hitungRow(id);
+    }
+
+    /* SCANNER BARCODE KAMERA */
+    function openScanner(id) {
+      activeScanId = id;
+      document.getElementById('scannerModal').style.display = 'block';
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        onScanSuccess
+      );
+    }
+
+    function closeScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(function() {
+          document.getElementById('scannerModal').style.display = 'none';
+        });
+      } else {
+        document.getElementById('scannerModal').style.display = 'none';
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      if (activeScanId) {
+        document.getElementById('barcode-' + activeScanId).value = decodedText;
+      }
+      closeScanner();
+    }
+
+    function pilihPreset(id) {
+      var val = document.getElementById('selectPecahan-' + id).value;
+      var inputAngka = document.getElementById('jenisPecahan-' + id);
+      var inputLabel = document.getElementById('labelPecahan-' + id);
+
+      if (val !== 'custom') {
+        inputAngka.value = val;
+        if (val === '1') inputLabel.value = 'Tidak Dipecah';
+        else if (val === '12' || val === '16' || val === '20') inputLabel.value = 'Batang';
+        else if (val === '4') inputLabel.value = '¼ Kg';
+        else if (val === '2') inputLabel.value = '½ Kg';
+      }
+      hitungRow(id);
+    }
+
+    function hapusBarang(id) {
+      var el = document.getElementById('item-' + id);
+      if (el) {
+        el.parentNode.removeChild(el);
+        hitungTotalNota();
+      }
+    }
+
+    function hitungRow(id) {
+      var qtyUtama = parseFloat(document.getElementById('qtyUtama-' + id).value) || 0;
+      var isiPerUtama = parseFloat(document.getElementById('isiPerUtama-' + id).value) || 1;
+      var totalBeli = parseFloat(document.getElementById('hargaBeliTotal-' + id).value) || 0;
+      var pecahan = parseFloat(document.getElementById('jenisPecahan-' + id).value) || 1;
+
+      var totalKemasanUtama = qtyUtama * isiPerUtama;
+      document.getElementById('totalKemasanUtama-' + id).value = totalKemasanUtama;
+
+      var hppKemasan = totalKemasanUtama > 0 ? totalBeli / totalKemasanUtama : 0;
+      var marginKemasan = parseFloat(document.getElementById('marginKemasanUtama-' + id).value) || 0;
+      var rekomendasiKemasan = Math.ceil((hppKemasan * (1 + marginKemasan / 100)) / 500) * 500;
+      
+      document.getElementById('hppKemasanUtama-' + id).value = Math.round(hppKemasan).toLocaleString('id-ID');
+      
+      var fKemasan = document.getElementById('jualKemasanUtama-' + id);
+      if (!fKemasan.value || fKemasan.getAttribute('data-auto') === "true") {
+        fKemasan.value = rekomendasiKemasan;
+        fKemasan.setAttribute('data-auto', 'true');
+      }
+
+      var totalEceranKecil = totalKemasanUtama * pecahan;
+      document.getElementById('totalEceranKecil-' + id).value = totalEceranKecil;
+
+      var hppEceranKecil = totalEceranKecil > 0 ? totalBeli / totalEceranKecil : 0;
+      var marginEceranKecil = parseFloat(document.getElementById('marginEceranKecil-' + id).value) || 0;
+      var rekomendasiEceranKecil = Math.ceil((hppEceranKecil * (1 + marginEceranKecil / 100)) / 500) * 500;
+      
+      document.getElementById('hppEceranKecil-' + id).value = Math.round(hppEceranKecil).toLocaleString('id-ID');
+
+      var fEceran = document.getElementById('jualEceranKecil-' + id);
+      if (pecahan <= 1) {
+        fEceran.value = fKemasan.value;
+      } else if (!fEceran.value || fEceran.getAttribute('data-auto') === "true") {
+        fEceran.value = rekomendasiEceranKecil;
+        fEceran.setAttribute('data-auto', 'true');
+      }
+
+      hitungTotalNota();
+    }
+
+    function hitungTotalNota() {
+      var total = 0;
+      var inputs = document.querySelectorAll('[id^="hargaBeliTotal-"]');
+      for (var i = 0; i < inputs.length; i++) {
+        total += parseFloat(inputs[i].value) || 0;
+      }
+      document.getElementById('displayTotal').innerText = 'Rp ' + total.toLocaleString('id-ID');
+      return total;
+    }
+
+    function simpanKeGoogleSheet() {
+      var scriptUrl = localStorage.getItem('gas_script_url');
+      if (!scriptUrl) { alert('URL Database belum diisi! Silakan atur melalui Menu Utama.'); return; }
+
+      var supplier = document.getElementById('supplier').value.trim();
+      if (!supplier) { alert('Mohon isi nama Supplier!'); return; }
+
+      var header = {
+        noNota: document.getElementById('noNota').value,
+        tanggal: document.getElementById('tglNota').value,
+        supplier: supplier,
+        metodeBayar: document.getElementById('metodeBayar').value,
+        catatan: document.getElementById('catatan').value,
+        totalPembelian: hitungTotalNota()
+      };
+
+      var items = [];
+      var itemDivs = document.querySelectorAll('.item-card');
+      
+      for (var i = 0; i < itemDivs.length; i++) {
+        var rawId = itemDivs[i].id.split('-')[1];
+        var namaBarang = document.getElementById('namaBarang-' + rawId).value.trim();
+        
+        if (namaBarang) {
+          items.push({
+            namaBarang: namaBarang,
+            barcode: document.getElementById('barcode-' + rawId).value.trim(),
+            hargaBeliTotal: parseFloat(document.getElementById('hargaBeliTotal-' + rawId).value) || 0,
+            totalKemasanUtama: parseFloat(document.getElementById('totalKemasanUtama-' + rawId).value) || 0,
+            hppKemasanUtama: parseFloat(document.getElementById('hppKemasanUtama-' + rawId).value.replace(/\./g, '')) || 0,
+            jualKemasanUtama: parseFloat(document.getElementById('jualKemasanUtama-' + rawId).value) || 0,
+            labelPecahan: document.getElementById('labelPecahan-' + rawId).value || 'Tidak Dipecah',
+            totalEceranKecil: parseFloat(document.getElementById('totalEceranKecil-' + rawId).value) || 0,
+            hppEceranKecil: parseFloat(document.getElementById('hppEceranKecil-' + rawId).value.replace(/\./g, '')) || 0,
+            jualEceranKecil: parseFloat(document.getElementById('jualEceranKecil-' + rawId).value) || 0
+          });
+        }
+      }
+
+      if (items.length === 0) { alert('Mohon isi minimal 1 Nama Barang!'); return; }
+
+      var btn = document.getElementById('btnSimpan');
+      btn.disabled = true;
+      btn.innerText = '⌛ Menyimpan...';
+
+      fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ header: header, items: items })
+      })
+      .then(function() {
+        alert('Data Nota Kulakan & Barcode berhasil dikirim ke Google Sheet!');
+        resetForm();
+      })
+      .catch(function(err) {
+        console.error(err);
+        alert('Gagal mengirim data.');
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.innerText = '☁️ Simpan ke Google Sheet';
+      });
+    }
+
+    function resetForm() {
+      document.getElementById('notaForm').reset();
+      document.getElementById('containerBarang').innerHTML = '';
+      var today = new Date().toISOString().split('T')[0];
+      document.getElementById('tglNota').value = today;
+      document.getElementById('noNota').value = 'NT-' + Date.now().toString().slice(-6);
+      countBarang = 0;
+      tambahBarang();
+      hitungTotalNota();
+    }
+
+    window.onload = function() {
+      var today = new Date().toISOString().split('T')[0];
+      document.getElementById('tglNota').value = today;
+      document.getElementById('noNota').value = 'NT-' + Date.now().toString().slice(-6);
+      
+      var scriptUrl = localStorage.getItem('gas_script_url');
+      if (!scriptUrl) {
+        alert('URL Database belum diisi! Silakan atur melalui Menu Utama.');
+      }
+
+      tambahBarang();
+    };
+  </script>
+</body>
+</html>
