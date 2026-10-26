@@ -585,12 +585,28 @@
         }
       }
 
+     var metodeBayar = document.getElementById('selectMetodeBayar').value;
+      var namaPelanggan = "";
+
+      // JIKA METODE BAYAR BON, MINTA INPUT NAMA PELANGGAN
+      if (metodeBayar === 'Bon') {
+        namaPelanggan = prompt('Masukkan Nama Pelanggan yang nge-Bon:', '');
+        if (!namaPelanggan || namaPelanggan.trim() === '') {
+          alert('Nama pelanggan wajib diisi untuk transaksi Bon!');
+          btn1.disabled = false; btn2.disabled = false;
+          btn1.innerText = '💾 Simpan Saja'; btn2.innerText = '🖨️ Cetak BT & Simpan';
+          return;
+        }
+      }
+
       // SIMPAN DATA KE GOOGLE SHEETS
       var payload = {
         action: "penjualan",
         noTransaksi: noTrx,
         tanggal: today,
         metodeBayar: metodeBayar,
+        namaPelanggan: namaPelanggan,
+        totalBelanja: total,
         items: cart
       };
 
