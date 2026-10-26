@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Manajemen Toko Feby</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; color: #334155; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; }
+    
+    header { background-color: #1e1b4b; color: white; padding: 25px 20px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    header h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+    header p { font-size: 13px; color: #a5b4fc; margin-top: 5px; }
+    
+    .container { max-width: 800px; margin: 30px auto; padding: 0 20px; width: 100%; }
+    
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+    
+    .menu-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; text-decoration: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+    .menu-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #6366f1; }
+    
+    .icon-box { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 12px; }
+    .bg-blue { background: #e0e7ff; color: #4338ca; }
+    .bg-emerald { background: #d1fae5; color: #059669; }
+    .bg-amber { background: #fef3c7; color: #d97706; }
+    .bg-slate { background: #f1f5f9; color: #64748b; }
+    
+    .menu-title { font-size: 16px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
+    .menu-desc { font-size: 12px; color: #64748b; line-height: 1.4; }
+    
+    .badge-dev { position: absolute; top: 12px; right: 12px; font-size: 9px; font-weight: bold; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; }
+    
+    footer { text-align: center; padding: 20px; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🏪 SISTEM MANAJEMEN TOKO FEBY</h1>
+    <p>Pusat Navigasi Operasional Warung & Database Kasir</p>
+  </header>
+
+  <div class="container">
+    <div class="menu-grid">
+      
+      <!-- Menu 1: Input Kulakan -->
+      <a href="kulakan.html" class="menu-card">
+        <div>
+          <div class="icon-box bg-blue">📝</div>
+          <div class="menu-title">Form Nota Kulakan</div>
+          <div class="menu-desc">Input pembelanjaan barang dari nota grosir, hitung HPP & margin otomatis.</div>
+        </div>
+      </a>
+
+      <!-- Menu 2: Dashboard Master Data -->
+      <a href="dashboard.html" class="menu-card">
+        <div>
+          <div class="icon-box bg-emerald">📊</div>
+          <div class="menu-title">Dashboard Barang & Harga</div>
+          <div class="menu-desc">Cek database stok barang, harga jual eceran terbaru, dan hitungan ketengan.</div>
+        </div>
+      </a>
+
+      <!-- Menu 3: Kasir Penjualan (Menu Masa Depan) -->
+      <a href="#" onclick="alert('Menu Transaksi Kasir sedang dirancang!')" class="menu-card">
+        <span class="badge-dev">Segera Hadir</span>
+        <div>
+          <div class="icon-box bg-amber">🛒</div>
+          <div class="menu-title">POS / Kasir Penjualan</div>
+          <div class="menu-desc">Form transaksi penjualan harian untuk hitung total belanjaan pembeli.</div>
+        </div>
+      </a>
+
+      <!-- Menu 4: Laporan & Keuangan (Menu Masa Depan) -->
+      <a href="#" onclick="alert('Menu Laporan Keuangan sedang dirancang!')" class="menu-card">
+        <span class="badge-dev">Segera Hadir</span>
+        <div>
+          <div class="icon-box bg-slate">📈</div>
+          <div class="menu-title">Laporan Keuangan</div>
+          <div class="menu-desc">Rekapitulasi omset harian, total modal kulakan, dan estimasi keuntungan toko.</div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>
+    Toko Feby &copy; 2026 — Integrated POS & Inventory System
+  </footer>
+
+</body>
+</html>
