@@ -33,10 +33,7 @@
     </div>
   </header>
 
-  <input type="hidden" id="scriptUrl">
-
   <div class="container">
-    
     <div class="card">
       <div class="title" style="display: flex; justify-content: space-between; align-items: center;">
         <span>📋 Daftar Piutang / Bon Pelanggan</span>
@@ -63,25 +60,22 @@
         </table>
       </div>
     </div>
-
   </div>
 
   <script>
     window.onload = function() {
-      var savedUrl = localStorage.getItem('gas_script_url');
-      if (savedUrl) {
-        document.getElementById('scriptUrl').value = savedUrl;
-        loadDataBon();
-      } else {
-        alert('URL Google Apps Script belum disetting di Kasir!');
-      }
+      loadDataBon();
     };
 
     function loadDataBon() {
-      var scriptUrl = document.getElementById('scriptUrl').value.trim();
-      if (!scriptUrl) return;
-
+      var scriptUrl = localStorage.getItem('gas_script_url');
       var tbody = document.getElementById('tableBonBody');
+
+      if (!scriptUrl) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
+        return;
+      }
+
       tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data bon...</td></tr>';
 
       fetch(scriptUrl + '?action=get_bon')
@@ -106,7 +100,6 @@
         return;
       }
 
-      // Urutkan dari yang terbaru
       data.reverse();
 
       for (var i = 0; i < data.length; i++) {
@@ -138,7 +131,7 @@
         return;
       }
 
-      var scriptUrl = document.getElementById('scriptUrl').value.trim();
+      var scriptUrl = localStorage.getItem('gas_script_url');
       var payload = {
         action: "lunasi_bon",
         noTransaksi: noTrx
