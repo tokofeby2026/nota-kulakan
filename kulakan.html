@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Nota Kulakan & Ketengan Fleksibel</title>
+  <title>Form Nota Kulakan & Scan Barcode</title>
+  <!-- Library Scanner Barcode -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background-color: #f1f5f9; padding: 15px; color: #334155; }
@@ -18,19 +20,30 @@
     .btn-hapus { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; float: right; border-radius: 4px; }
     .btn-simpan { background: #10b981; color: white; width: 100%; font-size: 16px; padding: 12px; margin-top: 10px; }
     .btn-reset { background: #94a3b8; color: white; padding: 12px; margin-top: 10px; }
+    .btn-scan { background: #6366f1; color: white; padding: 6px; font-size: 11px; margin-top: 2px; }
     .total-display { background: #0f172a; color: #38bdf8; padding: 12px; font-size: 20px; font-weight: bold; border-radius: 6px; text-align: right; }
     .tier-box { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; margin-top: 5px; }
     .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; color: #fff; }
   </style>
 </head>
 <body>
-  <!-- KODE TAMBAHAN TOMBOL KEMBALI DI SINI -->
+
   <div style="margin-bottom: 10px;">
     <a href="index.html" style="display: inline-block; background: #334155; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;">
       🏠 Kembali ke Menu Utama
     </a>
   </div>
-  <h2 style="text-align: center; margin-bottom: 15px;">🛒 Form Kulakan Fleksibel Toko Feby</h2>
+
+  <h2 style="text-align: center; margin-bottom: 15px;">🛒 Form Kulakan & Scan Barcode</h2>
+
+  <!-- Area Scanner Modal -->
+  <div id="scannerModal" style="display:none; background: rgba(0,0,0,0.8); position: fixed; top:0; left:0; width:100%; height:100%; z-index:999; padding:20px;">
+    <div style="background:white; max-width:400px; margin: 40px auto; padding:15px; border-radius:10px; text-align:center;">
+      <h3 style="margin-bottom:10px;">📷 Scan Barcode Produk</h3>
+      <div id="reader" style="width:100%;"></div>
+      <button type="button" class="btn btn-hapus" onclick="closeScanner()" style="float:none; margin-top:15px; width:100%; padding:10px; font-size:13px;">Batal / Tutup</button>
+    </div>
+  </div>
 
   <!-- Config GAS -->
   <div class="box" style="background: #fffbeb; border-color: #fde68a;">
@@ -96,6 +109,8 @@
 
   <script>
     var countBarang = 0;
+    var activeScanId = null;
+    var html5QrcodeScanner = null;
 
     function tambahBarang() {
       countBarang++;
@@ -110,10 +125,17 @@
         <button type="button" class="btn btn-hapus" onclick="hapusBarang(${id})">🗑️ Hapus</button>
         <div style="font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #4338ca;">Item #${id}</div>
         
-        <div class="grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 8px;">
+        <div class="grid" style="grid-template-columns: 2fr 1.5fr 1fr; margin-bottom: 8px;">
           <div>
             <label>Nama Barang</label>
-            <input type="text" id="namaBarang-${id}" placeholder="Contoh: Ultramilk 250ml / Djarum Super 20 / Minyak">
+            <input type="text" id="namaBarang-${id}" placeholder="Contoh: Ultramilk / Djarum Super">
+          </div>
+          <div>
+            <label>Barcode Produk</label>
+            <div style="display:flex; gap:4px;">
+              <input type="text" id="barcode-${id}" placeholder="Scan/ketik barcode">
+              <button type="button" class="btn btn-scan" onclick="openScanner(${id})">📷 Scan</button>
+            </div>
           </div>
           <div>
             <label>Total Beli Nota (Rp)</label>
@@ -145,7 +167,7 @@
           </div>
         </div>
 
-        <!-- LEVEL 1: UTAMA (HARGA PER PCS / BKS / KG) -->
+        <!-- LEVEL 1: UTAMA -->
         <div class="tier-box">
           <div style="margin-bottom: 4px;"><span class="badge" style="background:#0284c7;">HARGA UTAMA (PER PCS / BKS / KG)</span></div>
           <div class="grid">
@@ -156,24 +178,24 @@
           </div>
         </div>
 
-        <!-- LEVEL 2: PECAHAN KETENGAN FLEKSIBEL -->
+        <!-- LEVEL 2: PECAHAN KETENGAN -->
         <div class="tier-box">
-          <div style="margin-bottom: 4px;"><span class="badge" style="background:#d97706;">KETENGAN MIKRO / ECERAN KECIL (OPSIONAL)</span></div>
+          <div style="margin-bottom: 4px;"><span class="badge" style="background:#d97706;">KETENGAN MIKRO / ECERAN KECIL</span></div>
           <div class="grid" style="margin-bottom: 5px;">
             <div style="grid-column: span 2;">
-              <label>Pecahan Ketengan (Isi per 1 Satuan Utama):</label>
+              <label>Pecahan Ketengan:</label>
               <select id="selectPecahan-${id}" onchange="pilihPreset(${id})">
-                <option value="1">1 (Kosong / Tidak Dipecah Lagi)</option>
+                <option value="1">1 (Kosong / Tidak Dipecah)</option>
                 <option value="12">12 (Rokok 12 Batang)</option>
                 <option value="16">16 (Rokok 16 Batang)</option>
                 <option value="20">20 (Rokok 20 Batang)</option>
-                <option value="4">4 (Minyak/Sembako ¼ Kg)</option>
-                <option value="2">2 (Minyak/Sembako ½ Kg)</option>
+                <option value="4">4 (Minyak ¼ Kg)</option>
+                <option value="2">2 (Minyak ½ Kg)</option>
                 <option value="custom">Ketik Jumlah Bebas...</option>
               </select>
             </div>
             <div>
-              <label>Jumlah Pecahan (Angka)</label>
+              <label>Jumlah Pecahan</label>
               <input type="number" id="jenisPecahan-${id}" oninput="hitungRow(${id})" value="1" min="1">
             </div>
             <div>
@@ -195,6 +217,35 @@
       hitungRow(id);
     }
 
+    /* SCANNER BARCODE KAMERA */
+    function openScanner(id) {
+      activeScanId = id;
+      document.getElementById('scannerModal').style.display = 'block';
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        onScanSuccess
+      );
+    }
+
+    function closeScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(function() {
+          document.getElementById('scannerModal').style.display = 'none';
+        });
+      } else {
+        document.getElementById('scannerModal').style.display = 'none';
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      if (activeScanId) {
+        document.getElementById('barcode-' + activeScanId).value = decodedText;
+      }
+      closeScanner();
+    }
+
     function pilihPreset(id) {
       var val = document.getElementById('selectPecahan-' + id).value;
       var inputAngka = document.getElementById('jenisPecahan-' + id);
@@ -202,15 +253,10 @@
 
       if (val !== 'custom') {
         inputAngka.value = val;
-        if (val === '1') {
-          inputLabel.value = 'Tidak Dipecah';
-        } else if (val === '12' || val === '16' || val === '20') {
-          inputLabel.value = 'Batang';
-        } else if (val === '4') {
-          inputLabel.value = '¼ Kg';
-        } else if (val === '2') {
-          inputLabel.value = '½ Kg';
-        }
+        if (val === '1') inputLabel.value = 'Tidak Dipecah';
+        else if (val === '12' || val === '16' || val === '20') inputLabel.value = 'Batang';
+        else if (val === '4') inputLabel.value = '¼ Kg';
+        else if (val === '2') inputLabel.value = '½ Kg';
       }
       hitungRow(id);
     }
@@ -229,7 +275,6 @@
       var totalBeli = parseFloat(document.getElementById('hargaBeliTotal-' + id).value) || 0;
       var pecahan = parseFloat(document.getElementById('jenisPecahan-' + id).value) || 1;
 
-      // 1. Hitung Level Utama (Susu Ultramilk per Pcs, Rokok per Bks, Minyak per Kg)
       var totalKemasanUtama = qtyUtama * isiPerUtama;
       document.getElementById('totalKemasanUtama-' + id).value = totalKemasanUtama;
 
@@ -245,7 +290,6 @@
         fKemasan.setAttribute('data-auto', 'true');
       }
 
-      // 2. Hitung Ketengan Mikro (Batang Rokok, ¼ Kg Minyak, dll)
       var totalEceranKecil = totalKemasanUtama * pecahan;
       document.getElementById('totalEceranKecil-' + id).value = totalEceranKecil;
 
@@ -257,7 +301,6 @@
 
       var fEceran = document.getElementById('jualEceranKecil-' + id);
       if (pecahan <= 1) {
-        // Jika tidak dipecah, samakan dengan harga utama
         fEceran.value = fKemasan.value;
       } else if (!fEceran.value || fEceran.getAttribute('data-auto') === "true") {
         fEceran.value = rekomendasiEceranKecil;
@@ -279,18 +322,11 @@
 
     function simpanKeGoogleSheet() {
       var scriptUrl = document.getElementById('scriptUrl').value.trim();
-      if (!scriptUrl) {
-        alert('Mohon isi URL Google Apps Script terlebih dahulu!');
-        return;
-      }
+      if (!scriptUrl) { alert('Mohon isi URL Google Apps Script!'); return; }
 
       localStorage.setItem('gas_script_url', scriptUrl);
-
       var supplier = document.getElementById('supplier').value.trim();
-      if (!supplier) {
-        alert('Mohon isi nama Supplier!');
-        return;
-      }
+      if (!supplier) { alert('Mohon isi nama Supplier!'); return; }
 
       var header = {
         noNota: document.getElementById('noNota').value,
@@ -311,6 +347,7 @@
         if (namaBarang) {
           items.push({
             namaBarang: namaBarang,
+            barcode: document.getElementById('barcode-' + rawId).value.trim(),
             hargaBeliTotal: parseFloat(document.getElementById('hargaBeliTotal-' + rawId).value) || 0,
             totalKemasanUtama: parseFloat(document.getElementById('totalKemasanUtama-' + rawId).value) || 0,
             hppKemasanUtama: parseFloat(document.getElementById('hppKemasanUtama-' + rawId).value.replace(/\./g, '')) || 0,
@@ -323,10 +360,7 @@
         }
       }
 
-      if (items.length === 0) {
-        alert('Mohon isi minimal 1 Nama Barang!');
-        return;
-      }
+      if (items.length === 0) { alert('Mohon isi minimal 1 Nama Barang!'); return; }
 
       var btn = document.getElementById('btnSimpan');
       btn.disabled = true;
@@ -339,7 +373,7 @@
         body: JSON.stringify({ header: header, items: items })
       })
       .then(function() {
-        alert('Data Nota Kulakan berhasil dikirim ke Google Sheet!');
+        alert('Data Nota Kulakan & Barcode berhasil dikirim ke Google Sheet!');
         resetForm();
       })
       .catch(function(err) {
