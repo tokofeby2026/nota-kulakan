@@ -45,7 +45,7 @@
         <a href="index.html" style="display: inline-block; background: #312e81; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; margin-bottom: 8px;">
           🏠 Kembali ke Menu Utama
         </a>
-        <h2>📊 Dashboard & Cash Flow Toko Feby</h2>
+        <h2>📊 Dashboard Cash Flow & Aset Toko Feby</h2>
       </div>
       <span style="font-size: 12px; background: #312e81; padding: 5px 10px; border-radius: 15px;">Database Terhubung</span>
     </div>
@@ -53,7 +53,16 @@
 
   <div class="container">
     
-    <!-- RINGKASAN CASH FLOW -->
+    <!-- KARTU TOTAL ASET UTAMA -->
+    <div class="card" style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: white; margin-bottom: 15px;">
+      <div style="font-size: 12px; color: #c7d2fe; font-weight: bold; text-transform: uppercase;">ESTIMASI TOTAL ASET WARUNG</div>
+      <div style="font-size: 32px; font-weight: 800; color: #38bdf8; margin-top: 4px;" id="statTotalAset">Rp 0</div>
+      <div style="font-size: 11px; color: #a5b4fc; margin-top: 6px;">
+        (Formula: Uang Kas Bersih + Nilai Modal Stok Barang + Piutang Bon Pelanggan)
+      </div>
+    </div>
+
+    <!-- RINGKASAN CASH FLOW & ASET -->
     <div class="stats-grid">
       <div class="stat-card" style="border-left: 4px solid #059669;">
         <div class="stat-title">Total Omset (Penjualan)</div>
@@ -67,6 +76,10 @@
         <div class="stat-title">Estimasi Kas Bersih</div>
         <div class="stat-value" id="statKasBersih" style="color: #0284c7;">Rp 0</div>
       </div>
+      <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="stat-title">Nilai Modal Barang (Stok)</div>
+        <div class="stat-value" id="statNilaiStok" style="color: #8b5cf6;">Rp 0</div>
+      </div>
       <div class="stat-card" style="border-left: 4px solid #d97706;">
         <div class="stat-title">Total Piutang Gantung</div>
         <div class="stat-value" id="statPiutang" style="color: #d97706;">Rp 0</div>
@@ -76,7 +89,7 @@
     <!-- TAB NAVIGASI MODUL -->
     <div style="margin-bottom: 12px;">
       <button class="tab-btn active" onclick="switchTab('master')">📦 Master Data Barang</button>
-      <button class="tab-btn" onclick="loadCashFlow()">🔄 Refresh Cash Flow</button>
+      <button class="tab-btn" onclick="loadCashFlow()">🔄 Refresh Data Cash Flow</button>
     </div>
 
     <!-- TABEL MASTER DATA BARANG -->
@@ -127,9 +140,11 @@
         .then(function(res) {
           if (res.result === 'success') {
             var d = res.data;
+            document.getElementById('statTotalAset').innerText = 'Rp ' + (d.totalAsetWarung || 0).toLocaleString('id-ID');
             document.getElementById('statOmset').innerText = 'Rp ' + (d.totalPenjualan || 0).toLocaleString('id-ID');
             document.getElementById('statKulakan').innerText = 'Rp ' + (d.totalKulakan || 0).toLocaleString('id-ID');
             document.getElementById('statKasBersih').innerText = 'Rp ' + (d.kasBersih || 0).toLocaleString('id-ID');
+            document.getElementById('statNilaiStok').innerText = 'Rp ' + (d.totalNilaiStok || 0).toLocaleString('id-ID');
             document.getElementById('statPiutang').innerText = 'Rp ' + (d.totalPiutang || 0).toLocaleString('id-ID');
           }
         })
