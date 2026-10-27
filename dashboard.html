@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard & Cash Flow - Toko Feby</title>
+  <title>Dashboard & Stok Barang - Toko Feby</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
@@ -13,7 +13,7 @@
     
     .container { max-width: 1100px; margin: 15px auto; padding: 0 12px; }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 15px; }
     .stat-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .stat-title { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
     .stat-value { font-size: 20px; font-weight: bold; color: #0f172a; }
@@ -29,9 +29,11 @@
     td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; white-space: nowrap; }
     tr:hover { background-color: #f8fafc; }
     
-    .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; color: white; display: inline-block; }
+    .badge { font-size: 10px; font-weight: bold; padding: 3px 7px; border-radius: 4px; color: white; display: inline-block; }
     .bg-blue { background: #0284c7; }
     .bg-amber { background: #d97706; }
+    .bg-danger { background: #ef4444; }
+    .bg-success { background: #059669; }
     
     .tab-btn { background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; margin-right: 5px; }
     .tab-btn.active { background: #4338ca; color: white; }
@@ -45,7 +47,7 @@
         <a href="index.html" style="display: inline-block; background: #312e81; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; margin-bottom: 8px;">
           🏠 Kembali ke Menu Utama
         </a>
-        <h2>📊 Dashboard Cash Flow & Aset Toko Feby</h2>
+        <h2>📊 Dashboard Cash Flow & Stok Barang</h2>
       </div>
       <span style="font-size: 12px; background: #312e81; padding: 5px 10px; border-radius: 15px;">Database Terhubung</span>
     </div>
@@ -88,7 +90,7 @@
 
     <!-- TAB NAVIGASI MODUL -->
     <div style="margin-bottom: 12px;">
-      <button class="tab-btn active" onclick="switchTab('master')">📦 Master Data Barang</button>
+      <button class="tab-btn active" onclick="switchTab('master')">📦 Stok & Master Barang</button>
       <button class="tab-btn" onclick="loadCashFlow()">🔄 Refresh Data Cash Flow</button>
     </div>
 
@@ -106,15 +108,16 @@
               <th>No</th>
               <th>Nama Barang</th>
               <th>Barcode</th>
-              <th>Harga Jual (Utama)</th>
-              <th>Eceran Ketengan</th>
-              <th>Harga Jual (Ketengan)</th>
-              <th>Nota Terakhir</th>
+              <th>Harga Jual</th>
+              <th>Kulakan Awal</th>
+              <th>Terjual</th>
+              <th>Sisa Stok Fisik</th>
+              <th>Status Stok</th>
             </tr>
           </thead>
           <tbody id="tableBodyBarang">
             <tr>
-              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang...</td>
+              <td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang & sisa stok...</td>
             </tr>
           </tbody>
         </table>
@@ -156,11 +159,11 @@
       var tbody = document.getElementById('tableBodyBarang');
 
       if (!scriptUrl) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data sisa stok barang...</td></tr>';
 
       fetch(scriptUrl)
         .then(function(res) { return res.json(); })
@@ -169,12 +172,12 @@
             masterBarang = res.data || [];
             renderTableBarang(masterBarang);
           } else {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data dari Google Sheets.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data dari Google Sheets.</td></tr>';
           }
         })
         .catch(function(err) {
           console.error(err);
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Terjadi kesalahan koneksi.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">Terjadi kesalahan koneksi.</td></tr>';
         });
     }
 
@@ -183,7 +186,7 @@
       tbody.innerHTML = '';
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada data barang tersimpan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada data barang tersimpan.</td></tr>';
         return;
       }
 
@@ -192,16 +195,17 @@
         var barcodeTxt = item.barcode ? `<code>${item.barcode}</code>` : '<span style="color:#cbd5e1;">-</span>';
         var hargaUtama = parseFloat(item.jualKemasanUtama) || 0;
         
-        var labelMicro = item.labelPecahan || 'Tidak Dipecah';
-        var hargaMicro = parseFloat(item.jualEceranKecil) || 0;
-        
-        var microDisplay = (labelMicro !== 'Tidak Dipecah' && hargaMicro > 0)
-          ? `<span class="badge bg-amber">${labelMicro}</span>`
-          : '<span style="color:#cbd5e1;">-</span>';
+        var totalKulakan = parseFloat(item.totalKemasanUtama) || 0;
+        var totalTerjual = parseFloat(item.totalTerjual) || 0;
+        var sisaStok = item.sisaStok !== undefined ? parseFloat(item.sisaStok) : (totalKulakan - totalTerjual);
 
-        var hargaMicroDisplay = (labelMicro !== 'Tidak Dipecah' && hargaMicro > 0)
-          ? `<b>Rp ${hargaMicro.toLocaleString('id-ID')}</b>`
-          : '<span style="color:#cbd5e1;">-</span>';
+        // Status Peringatan Stok
+        var statusBadge = '<span class="badge bg-success">Aman</span>';
+        if (sisaStok <= 0) {
+          statusBadge = '<span class="badge bg-danger">Habis!</span>';
+        } else if (sisaStok <= 5) {
+          statusBadge = '<span class="badge bg-amber">⚠️ Menipis</span>';
+        }
 
         tbody.innerHTML += `
           <tr>
@@ -209,9 +213,10 @@
             <td><b>${item.namaBarang}</b></td>
             <td>${barcodeTxt}</td>
             <td style="color: #059669; font-weight: bold;">Rp ${hargaUtama.toLocaleString('id-ID')}</td>
-            <td>${microDisplay}</td>
-            <td>${hargaMicroDisplay}</td>
-            <td><small style="color: #64748b;">${item.noNota || '-'}</small></td>
+            <td style="color: #64748b; text-align: center;">${totalKulakan}</td>
+            <td style="color: #d97706; text-align: center;">${totalTerjual}</td>
+            <td style="font-size: 14px; font-weight: bold; color: #0f172a; text-align: center;">${sisaStok}</td>
+            <td>${statusBadge}</td>
           </tr>
         `;
       }
