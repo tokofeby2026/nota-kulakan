@@ -12,7 +12,7 @@
     header h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
     header p { font-size: 13px; color: #a5b4fc; margin-top: 5px; }
     
-    .container { max-width: 800px; margin: 20px auto; padding: 0 20px; width: 100%; }
+    .container { max-width: 850px; margin: 20px auto; padding: 0 20px; width: 100%; }
     
     .config-box { background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .config-status { font-size: 12px; font-weight: bold; }
@@ -28,6 +28,7 @@
     .bg-emerald { background: #d1fae5; color: #059669; }
     .bg-amber { background: #fef3c7; color: #d97706; }
     .bg-purple { background: #f3e8ff; color: #7e22ce; }
+    .bg-indigo { background: #e0e7ff; color: #3730a3; }
     
     .menu-title { font-size: 16px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
     .menu-desc { font-size: 12px; color: #64748b; line-height: 1.4; }
@@ -67,9 +68,9 @@
       <!-- Menu 2: Dashboard Master Data -->
       <a href="dashboard.html" class="menu-card">
         <div>
-          <div class="icon-box bg-emerald">📊</div>
-          <div class="menu-title">Dashboard Barang & Harga</div>
-          <div class="menu-desc">Cek database stok barang, harga jual eceran terbaru, dan hitungan ketengan.</div>
+          <div class="icon-box bg-emerald">📦</div>
+          <div class="menu-title">Stok & Master Barang</div>
+          <div class="menu-desc">Cek sisa stok barang, harga eceran terbaru, dan alert stok menipis.</div>
         </div>
       </a>
 
@@ -88,6 +89,15 @@
           <div class="icon-box bg-purple">📝</div>
           <div class="menu-title">Buku Bon & Piutang</div>
           <div class="menu-desc">Cek daftar hutang pelanggan dan catat pelunasan bon transaksi.</div>
+        </div>
+      </a>
+
+      <!-- Menu 5: Arus Kas & Aset Warung -->
+      <a href="cashflow.html" class="menu-card">
+        <div>
+          <div class="icon-box bg-indigo">💰</div>
+          <div class="menu-title">Arus Kas & Aset Warung</div>
+          <div class="menu-desc">Rekap total omset, pengeluaran kulakan, kas bersih, dan estimasi total aset warung.</div>
         </div>
       </a>
 
