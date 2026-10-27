@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Master Data Barang - Toko Feby</title>
+  <title>Dashboard & Cash Flow - Toko Feby</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
@@ -32,6 +32,9 @@
     .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; color: white; display: inline-block; }
     .bg-blue { background: #0284c7; }
     .bg-amber { background: #d97706; }
+    
+    .tab-btn { background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; margin-right: 5px; }
+    .tab-btn.active { background: #4338ca; color: white; }
   </style>
 </head>
 <body>
@@ -42,31 +45,45 @@
         <a href="index.html" style="display: inline-block; background: #312e81; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; margin-bottom: 8px;">
           🏠 Kembali ke Menu Utama
         </a>
-        <h2>📊 Dashboard Master Data Barang Kasir</h2>
+        <h2>📊 Dashboard & Cash Flow Toko Feby</h2>
       </div>
-      <span style="font-size: 12px; background: #312e81; padding: 5px 10px; border-radius: 15px;">Toko Feby Database</span>
+      <span style="font-size: 12px; background: #312e81; padding: 5px 10px; border-radius: 15px;">Database Terhubung</span>
     </div>
   </header>
 
   <div class="container">
     
-    <!-- STATISTIK RINGKASAN -->
+    <!-- RINGKASAN CASH FLOW -->
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-title">Total Jenis Barang</div>
-        <div class="stat-value" id="statTotalItem">0 Item</div>
+      <div class="stat-card" style="border-left: 4px solid #059669;">
+        <div class="stat-title">Total Omset (Penjualan)</div>
+        <div class="stat-value" id="statOmset" style="color: #059669;">Rp 0</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-title">Terakhir Diperbarui</div>
-        <div class="stat-value" id="statLastUpdate" style="font-size: 14px; color: #0284c7;">-</div>
+      <div class="stat-card" style="border-left: 4px solid #ef4444;">
+        <div class="stat-title">Total Kulakan (Pengeluaran)</div>
+        <div class="stat-value" id="statKulakan" style="color: #ef4444;">Rp 0</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #0284c7;">
+        <div class="stat-title">Estimasi Kas Bersih</div>
+        <div class="stat-value" id="statKasBersih" style="color: #0284c7;">Rp 0</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #d97706;">
+        <div class="stat-title">Total Piutang Gantung</div>
+        <div class="stat-value" id="statPiutang" style="color: #d97706;">Rp 0</div>
       </div>
     </div>
 
+    <!-- TAB NAVIGASI MODUL -->
+    <div style="margin-bottom: 12px;">
+      <button class="tab-btn active" onclick="switchTab('master')">📦 Master Data Barang</button>
+      <button class="tab-btn" onclick="loadCashFlow()">🔄 Refresh Cash Flow</button>
+    </div>
+
     <!-- TABEL MASTER DATA BARANG -->
-    <div class="card">
+    <div class="card" id="secMaster">
       <div class="search-box">
         <input type="text" id="inputCari" onkeyup="filterBarang()" placeholder="🔍 Cari nama barang atau nomor barcode...">
-        <button type="button" onclick="loadDataBarang()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; white-space: nowrap;">🔄 Refresh</button>
+        <button type="button" onclick="loadDataBarang()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; white-space: nowrap;">🔄 Refresh Data</button>
       </div>
 
       <div class="table-responsive">
@@ -98,7 +115,26 @@
 
     window.onload = function() {
       loadDataBarang();
+      loadCashFlow();
     };
+
+    function loadCashFlow() {
+      var scriptUrl = localStorage.getItem('gas_script_url');
+      if (!scriptUrl) return;
+
+      fetch(scriptUrl + '?action=get_cashflow')
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+          if (res.result === 'success') {
+            var d = res.data;
+            document.getElementById('statOmset').innerText = 'Rp ' + (d.totalPenjualan || 0).toLocaleString('id-ID');
+            document.getElementById('statKulakan').innerText = 'Rp ' + (d.totalKulakan || 0).toLocaleString('id-ID');
+            document.getElementById('statKasBersih').innerText = 'Rp ' + (d.kasBersih || 0).toLocaleString('id-ID');
+            document.getElementById('statPiutang').innerText = 'Rp ' + (d.totalPiutang || 0).toLocaleString('id-ID');
+          }
+        })
+        .catch(function(err) { console.error(err); });
+    }
 
     function loadDataBarang() {
       var scriptUrl = localStorage.getItem('gas_script_url');
@@ -117,7 +153,6 @@
           if (res.result === 'success') {
             masterBarang = res.data || [];
             renderTableBarang(masterBarang);
-            updateStats();
           } else {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data dari Google Sheets.</td></tr>';
           }
@@ -175,32 +210,6 @@
         return nama.includes(keyword) || barcode.includes(keyword);
       });
       renderTableBarang(filtered);
-    }
-
-    function updateStats() {
-      document.getElementById('statTotalItem').innerText = masterBarang.length + ' Item';
-
-      if (masterBarang.length > 0) {
-        var rawDate = masterBarang[masterBarang.length - 1].tanggal;
-        if (rawDate) {
-          var d = new Date(rawDate);
-          if (!isNaN(d.getTime())) {
-            var tgl = String(d.getDate()).padStart(2, '0');
-            var bln = String(d.getMonth() + 1).padStart(2, '0');
-            var thn = d.getFullYear();
-            var jam = String(d.getHours()).padStart(2, '0');
-            var mnt = String(d.getMinutes()).padStart(2, '0');
-            
-            document.getElementById('statLastUpdate').innerText = tgl + '-' + bln + '-' + thn + ' ' + jam + ':' + mnt + ' WIB';
-          } else {
-            document.getElementById('statLastUpdate').innerText = rawDate;
-          }
-        } else {
-          document.getElementById('statLastUpdate').innerText = '-';
-        }
-      } else {
-        document.getElementById('statLastUpdate').innerText = '-';
-      }
     }
   </script>
 </body>
