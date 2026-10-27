@@ -48,7 +48,7 @@
               <th>No Trx / Tgl</th>
               <th>Nama Pelanggan</th>
               <th>Rincian Barang</th>
-              <th>Total Bon</th>
+              <th>Total Awal</th>
               <th>Sisa Hutang</th>
               <th>Status</th>
               <th>Aksi</th>
@@ -109,7 +109,9 @@
       for (var i = 0; i < data.length; i++) {
         var item = data[i];
         var totalBon = parseFloat(item.totalBon || 0);
-        var sisaHutang = item.sisaBon !== undefined && item.sisaBon !== "" ? parseFloat(item.sisaBon) : totalBon;
+        
+        // Membaca sisa bon dari properti sisaBon
+        var sisaHutang = (item.sisaBon !== undefined && item.sisaBon !== "") ? parseFloat(item.sisaBon) : totalBon;
         var statusTxt = (item.status || 'BELUM LUNAS').toString().toUpperCase();
 
         var badge = '<span class="badge-danger">BELUM LUNAS</span>';
@@ -141,7 +143,7 @@
     }
 
     function bayarSebagian(noTrx, nama, sisaCurrent) {
-      var nominal = prompt(`BAYAR CICILAN BON\n\nPelanggan: ${nama}\nSisa Hutang: Rp ${sisaCurrent.toLocaleString('id-ID')}\n\nMasukkan nominal pembayaran:`, '');
+      var nominal = prompt(`BAYAR CICILAN BON\n\nPelanggan: ${nama}\nSisa Utang: Rp ${sisaCurrent.toLocaleString('id-ID')}\n\nMasukkan nominal yang dibayarkan saat ini:`, '');
       if (nominal !== null && nominal.trim() !== '') {
         var bayarVal = parseFloat(nominal);
         if (isNaN(bayarVal) || bayarVal <= 0) {
@@ -154,7 +156,7 @@
     }
 
     function pelunasanBon(noTrx, nama, sisaCurrent) {
-      if (!confirm(`Konfirmasi Pelunasan Full:\n\nPelanggan: ${nama}\nSisa Hutang: Rp ${sisaCurrent.toLocaleString('id-ID')}\n\nYakin transaksi ini sudah LUNAS seluruhnya?`)) {
+      if (!confirm(`Konfirmasi Pelunasan Total:\n\nPelanggan: ${nama}\nSisa Utang: Rp ${sisaCurrent.toLocaleString('id-ID')}\n\nYakin utang ini sudah LUNAS seluruhnya?`)) {
         return;
       }
       prosesBayarBon(noTrx, sisaCurrent);
@@ -175,12 +177,12 @@
         body: JSON.stringify(payload)
       })
       .then(function() {
-        alert('Pembayaran Bon Berhasil Diperbarui!');
+        alert('Pembayaran cicilan berhasil dicatat!');
         loadDataBon();
       })
       .catch(function(err) {
         console.error(err);
-        alert('Gagal mengupdate pembayaran bon.');
+        alert('Gagal mengupdate pembayaran.');
       });
     }
   </script>
