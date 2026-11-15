@@ -54,8 +54,9 @@
     </div>
   </div>
 
-  <!-- Datalist untuk Autocomplete Nama Barang dari Database -->
+  <!-- Datalist Autocomplete Nama & Barcode -->
   <datalist id="datalistMasterBarang"></datalist>
+  <datalist id="datalistMasterBarcode"></datalist>
 
   <form id="notaForm" onsubmit="return false;">
     
@@ -89,6 +90,7 @@
             <option value="ShopeePay">📱 ShopeePay</option>
             <option value="Buku Warung">📒 Buku Warung</option>
             <option value="Tempo">⏳ Tempo / Hutang Supplier</option>
+            <option value="Modal Awal Barang">📦 Modal Awal Barang (Stok Awal)</option>
           </select>
         </div>
       </div>
@@ -109,7 +111,7 @@
     <!-- Catatan & Total -->
     <div class="box">
       <label>Catatan Nota</label>
-      <textarea id="catatan" rows="2" placeholder="Catatan tambahan (misal: bonus barang, ongkir, jatuh tempo)..."></textarea>
+      <textarea id="catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
       <div style="margin-top: 10px;">
         <label>TOTAL NOTA BELANJA:</label>
         <div class="total-display" id="displayTotal">Rp 0</div>
@@ -149,13 +151,29 @@
         .then(function(res) {
           if (res.result === 'success') {
             masterBarangList = res.data || [];
-            var dl = document.getElementById('datalistMasterBarang');
-            dl.innerHTML = '';
+            var dlNama = document.getElementById('datalistMasterBarang');
+            var dlBarcode = document.getElementById('datalistMasterBarcode');
+            dlNama.innerHTML = '';
+            dlBarcode.innerHTML = '';
+
             masterBarangList.forEach(function(item) {
-              var opt = document.createElement('option');
-              opt.value = item.namaBarang;
-              dl.appendChild(opt);
+              var optN = document.createElement('option');
+              optN.value = item.namaBarang;
+              dlNama.appendChild(optN);
+
+              if (item.barcode && item.barcode.toString().trim() !== '') {
+                var optB = document.createElement('option');
+                optB.value = item.barcode;
+                optB.label = item.namaBarang;
+                dlBarcode.appendChild(optB);
+              }
             });
+
+            // Perbarui dropdown pilih cepat di setiap kartu barang
+            document.querySelectorAll('.select-quick-master').forEach(function(sel) {
+              isiOpsiQuickMaster(sel);
+            });
+
             statusEl.innerText = '🟢 Master: ' + masterBarangList.length + ' Produk';
             statusEl.style.color = '#6ee7b7';
           } else {
@@ -166,6 +184,24 @@
           console.error(err);
           statusEl.innerText = '⚠️ Offline / Error';
         });
+    }
+
+    function isiOpsiQuickMaster(selectEl) {
+      var currentVal = selectEl.value;
+      selectEl.innerHTML = '<option value="">-- Pilih Produk Lama dari Database (Opsional) --</option>';
+      masterBarangList.forEach(function(item, idx) {
+        var bc = item.barcode ? ' [' + item.barcode + ']' : '';
+        selectEl.innerHTML += `<option value="${idx}">${item.namaBarang}${bc} — Sisa: ${item.sisaStokText || item.sisaStok}</option>`;
+      });
+      selectEl.value = currentVal;
+    }
+
+    function pilihDariQuickMaster(id, idxStr) {
+      if (idxStr === '') return;
+      var found = masterBarangList[parseInt(idxStr)];
+      if (found) {
+        terapkanDataMasterKeRow(id, found, 'quick');
+      }
     }
 
     function tambahBarang() {
@@ -185,20 +221,27 @@
 
         <input type="hidden" id="kodeBarang-${id}" value="">
 
+        <!-- Pilih Cepat dari Master Data -->
+        <div style="margin-bottom: 8px;">
+          <select id="quickMaster-${id}" class="select-quick-master" onchange="pilihDariQuickMaster(${id}, this.value)" style="background:#eef2ff; border-color:#a5b4fc; font-size:12px;">
+            <option value="">-- Pilih Produk Lama dari Database (Opsional) --</option>
+          </select>
+        </div>
+
         <!-- Banner Peringatan Status Database -->
         <div id="alertDb-${id}" class="alert-db alert-new">
-          🆕 Barang baru — akan dibuatkan data master baru & dicatat ke riwayat kulakan.
+          🆕 Barang baru — ketik Nama Barang & Barcode baru. Jika sudah ada di database, data akan terisi otomatis.
         </div>
         
         <div class="grid" style="grid-template-columns: 2fr 1.5fr 1fr; margin-bottom: 8px;">
           <div>
-            <label>Nama Barang (Ketik / Pilih dari Database)</label>
-            <input type="text" id="namaBarang-${id}" list="datalistMasterBarang" oninput="cekBarangEksisting(${id}, 'nama')" onchange="cekBarangEksisting(${id}, 'nama')" placeholder="Contoh: Djarum Super / Mama Lemon">
+            <label>Nama Barang (Otomatis isi Barcode jika ada)</label>
+            <input type="text" id="namaBarang-${id}" list="datalistMasterBarang" oninput="cekBarangEksisting(${id}, 'nama')" onchange="cekBarangEksisting(${id}, 'nama')" placeholder="Ketik nama barang...">
           </div>
           <div>
-            <label>Barcode Produk</label>
+            <label>Barcode Produk (Otomatis isi Nama jika ada)</label>
             <div style="display:flex; gap:4px;">
-              <input type="text" id="barcode-${id}" oninput="cekBarangEksisting(${id}, 'barcode')" onchange="cekBarangEksisting(${id}, 'barcode')" placeholder="Scan / ketik barcode">
+              <input type="text" id="barcode-${id}" list="datalistMasterBarcode" oninput="cekBarangEksisting(${id}, 'barcode')" onchange="cekBarangEksisting(${id}, 'barcode')" placeholder="Scan / ketik barcode">
               <button type="button" class="btn btn-scan" onclick="openScanner(${id})">📷 Scan</button>
             </div>
           </div>
@@ -234,9 +277,6 @@
                 <option value="Karung">Karung</option>
               </select>
             </div>
-          </div>
-          <div style="font-size: 10px; color: #3730a3; margin-top: 4px;">
-            💡 Contoh: Beli <b>2 Dus</b> Mama Lemon → Qty Beli = <b>2</b>, Isi = <b>1</b>, Satuan = <b>Dus</b>. Beli <b>1 Slop</b> Rokok isi 10 Bks → Qty Beli = <b>1</b>, Isi = <b>10</b>, Satuan = <b>Bungkus</b>.
           </div>
         </div>
 
@@ -299,16 +339,17 @@
       `;
 
       container.appendChild(div);
+      isiOpsiQuickMaster(document.getElementById('quickMaster-' + id));
       hitungRow(id);
     }
 
-    /* DETEKSI OTOMATIS BARANG YANG SUDAH ADA DI DATABASE */
+    /* SINKRONISASI 2 ARAH: NAMA <-> BARCODE OTOMATIS */
     function cekBarangEksisting(id, triggerSource) {
       var namaVal = document.getElementById('namaBarang-' + id).value.trim().toLowerCase();
       var barcodeVal = document.getElementById('barcode-' + id).value.trim();
       var found = null;
 
-      if (triggerSource === 'barcode' && barcodeVal.length >= 3) {
+      if (triggerSource === 'barcode' && barcodeVal.length >= 2) {
         found = masterBarangList.find(function(b) {
           return b.barcode && b.barcode.toString().trim() === barcodeVal;
         });
@@ -318,27 +359,51 @@
         });
       }
 
+      if (found) {
+        terapkanDataMasterKeRow(id, found, triggerSource);
+      } else if (document.getElementById('kodeBarang-' + id).value !== '') {
+        // Kembali ke mode Barang Baru jika user mengubah teks ke barang baru
+        var card = document.getElementById('item-' + id);
+        var alertBox = document.getElementById('alertDb-' + id);
+        var badge = document.getElementById('badgeMode-' + id);
+
+        card.className = 'item-card is-new';
+        badge.innerText = 'BARANG BARU';
+        badge.style.background = '#059669';
+        document.getElementById('kodeBarang-' + id).value = '';
+        document.getElementById('quickMaster-' + id).value = '';
+        document.getElementById('jualKemasanUtama-' + id).removeAttribute('data-manual');
+        document.getElementById('jualEceranKecil-' + id).removeAttribute('data-manual');
+        alertBox.className = 'alert-db alert-new';
+        alertBox.innerHTML = '🆕 Barang baru — akan dibuatkan data master baru & dicatat ke riwayat kulakan.';
+        hitungRow(id);
+      }
+    }
+
+    function terapkanDataMasterKeRow(id, found, triggerSource) {
+      var currentKode = document.getElementById('kodeBarang-' + id).value;
       var card = document.getElementById('item-' + id);
       var alertBox = document.getElementById('alertDb-' + id);
       var badge = document.getElementById('badgeMode-' + id);
 
-      if (found) {
-        // Hindari loop berulang jika item yang sama sudah dimuat
-        if (document.getElementById('kodeBarang-' + id).value === found.kodeBarang && found.kodeBarang) {
-          return;
-        }
+      card.className = 'item-card is-existing';
+      badge.innerText = 'UPDATE STOK & HARGA';
+      badge.style.background = '#d97706';
 
-        card.className = 'item-card is-existing';
-        badge.innerText = 'UPDATE STOK & HARGA';
-        badge.style.background = '#d97706';
+      document.getElementById('kodeBarang-' + id).value = found.kodeBarang || '';
 
-        document.getElementById('kodeBarang-' + id).value = found.kodeBarang || '';
-        document.getElementById('namaBarang-' + id).value = found.namaBarang;
-        if (found.barcode && !barcodeVal) {
-          document.getElementById('barcode-' + id).value = found.barcode;
-        }
+      // Isi Nama Barang otomatis jika user mengisi Barcode atau Quick Select
+      if (triggerSource !== 'nama') {
+        document.getElementById('namaBarang-' + id).value = found.namaBarang || '';
+      }
 
-        // Set Satuan Utama
+      // Isi Barcode otomatis jika user mengetik/memilih Nama Barang atau Quick Select
+      if (triggerSource !== 'barcode') {
+        document.getElementById('barcode-' + id).value = found.barcode || '';
+      }
+
+      // Jika item baru dipilih (berbeda dari item sebelumnya di baris ini), isi satuan & harga lama
+      if (currentKode !== (found.kodeBarang || found.namaBarang)) {
         var selUtama = document.getElementById('namaKemasanUtama-' + id);
         var satuanDb = found.satuanUtama || 'Pcs';
         var optionExists = Array.from(selUtama.options).some(function(opt) { return opt.value === satuanDb; });
@@ -350,7 +415,6 @@
         }
         selUtama.value = satuanDb;
 
-        // Set Pecahan Ketengan
         var pecahanDb = parseInt(found.pecahan) || 1;
         var selPecahan = document.getElementById('selectPecahan-' + id);
         var presetMatch = Array.from(selPecahan.options).some(function(opt) { return opt.value === pecahanDb.toString(); });
@@ -358,37 +422,27 @@
         document.getElementById('jenisPecahan-' + id).value = pecahanDb;
         document.getElementById('labelPecahan-' + id).value = found.labelPecahan || (pecahanDb > 1 ? 'Pcs' : 'Tidak Dipecah');
 
-        // Isi Harga Jual lama dari database
         var fUtama = document.getElementById('jualKemasanUtama-' + id);
         var fKecil = document.getElementById('jualEceranKecil-' + id);
         fUtama.value = parseFloat(found.jualKemasanUtama) || 0;
         fUtama.setAttribute('data-manual', 'true');
         fKecil.value = parseFloat(found.jualEceranKecil) || fUtama.value;
         fKecil.setAttribute('data-manual', 'true');
-
-        var stokInfo = found.sisaStokText || (found.sisaStok + ' ' + satuanDb);
-        var hargaKetenganInfo = pecahanDb > 1 ? ` | Ketengan: Rp ${(parseFloat(found.jualEceranKecil)||0).toLocaleString('id-ID')}/${found.labelPecahan}` : '';
-
-        alertBox.className = 'alert-db alert-existing';
-        alertBox.innerHTML = `
-          ⚠️ <b>Barang Sudah Ada di Database (${found.kodeBarang || 'Master'})!</b><br>
-          Sisa Stok Saat Ini: <b>${stokInfo}</b> | Harga Jual Lama: <b>Rp ${(parseFloat(found.jualKemasanUtama)||0).toLocaleString('id-ID')}/${satuanDb}</b>${hargaKetenganInfo}.<br>
-          <i>Silakan isi Qty Beli & Total Harga Beli baru — stok akan otomatis ditambahkan & harga diperbarui.</i>
-        `;
-
-        hitungRow(id);
-      } else if (document.getElementById('kodeBarang-' + id).value !== '') {
-        // Reset kembali ke mode Barang Baru jika user menghapus/mengganti nama menjadi barang baru
-        card.className = 'item-card is-new';
-        badge.innerText = 'BARANG BARU';
-        badge.style.background = '#059669';
-        document.getElementById('kodeBarang-' + id).value = '';
-        document.getElementById('jualKemasanUtama-' + id).removeAttribute('data-manual');
-        document.getElementById('jualEceranKecil-' + id).removeAttribute('data-manual');
-        alertBox.className = 'alert-db alert-new';
-        alertBox.innerHTML = '🆕 Barang baru — akan dibuatkan data master baru & dicatat ke riwayat kulakan.';
-        hitungRow(id);
       }
+
+      var stokInfo = found.sisaStokText || (found.sisaStok + ' ' + (found.satuanUtama || 'Pcs'));
+      var barcodeInfo = found.barcode ? ` | Barcode: <b>${found.barcode}</b>` : ' | <i>Belum ada barcode</i>';
+      var hargaKetenganInfo = (parseInt(found.pecahan) || 1) > 1
+        ? ` | Ketengan: <b>Rp ${(parseFloat(found.jualEceranKecil)||0).toLocaleString('id-ID')}/${found.labelPecahan}</b>`
+        : '';
+
+      alertBox.className = 'alert-db alert-existing';
+      alertBox.innerHTML = `
+        ⚠️ <b>Produk Ditemukan di Master Data (${found.kodeBarang || 'Master'})!</b>${barcodeInfo}<br>
+        Sisa Stok Sekarang: <b>${stokInfo}</b> | Harga Jual Utama: <b>Rp ${(parseFloat(found.jualKemasanUtama)||0).toLocaleString('id-ID')}/${found.satuanUtama}</b>${hargaKetenganInfo}.
+      `;
+
+      hitungRow(id);
     }
 
     function pakaiSaranHarga(id, level, nilai) {
@@ -406,7 +460,6 @@
       }
     }
 
-    /* SCANNER BARCODE KAMERA */
     function openScanner(id) {
       activeScanId = id;
       document.getElementById('scannerModal').style.display = 'block';
@@ -515,7 +568,6 @@
         saranKecilEl.innerHTML = '';
       }
 
-      // Preview Stok Masuk
       var previewText = `📦 Stok Masuk: ${totalKemasanUtama} ${satuanUtama}`;
       if (pecahan > 1) {
         previewText += ` (Total ${totalEceranKecil} ${labelPecahan} — 1 ${satuanUtama} isi ${pecahan} ${labelPecahan})`;
@@ -592,16 +644,16 @@
       .then(function(res) { return res.json(); })
       .then(function(res) {
         if (res.result === 'success') {
-          alert('✅ ' + (res.message || 'Data Nota Kulakan berhasil disimpan & stok Master Barang telah diperbarui!'));
+          alert('✅ ' + (res.message || 'Data Nota Kulakan berhasil disimpan!'));
           resetForm();
           muatMasterBarang();
         } else {
-          alert('❌ Gagal menyimpan: ' + (res.message || 'Terjadi kesalahan di server.'));
+          alert('❌ Gagal menyimpan: ' + (res.message || 'Terjadi kesalahan.'));
         }
       })
       .catch(function(err) {
         console.error(err);
-        alert('❌ Gagal terhubung ke Google Sheet. Pastikan URL Script benar & sudah Deploy versi terbaru.');
+        alert('❌ Gagal terhubung ke Google Sheet. Pastikan sudah Deploy versi terbaru.');
       })
       .finally(function() {
         btn.disabled = false;
