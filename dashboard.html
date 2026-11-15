@@ -3,37 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stok & Master Data Barang - Toko Feby</title>
+  <title>Master Barang & Stok Fisik - Toko Feby</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
-    
     header { background-color: #1e1b4b; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .header-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-    
-    .container { max-width: 1100px; margin: 15px auto; padding: 0 12px; }
-    
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    .header-content { max-width: 1150px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 1150px; margin: 15px auto; padding: 0 12px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 15px; }
     .stat-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .stat-title { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
     .stat-value { font-size: 20px; font-weight: bold; color: #0f172a; }
-
     .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    
-    .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
-    input[type="text"] { width: 100%; padding: 9px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
-    
+    .search-box { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+    input[type="text"] { flex: 1; min-width: 220px; padding: 9px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
     .table-responsive { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th { background: #f8fafc; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: bold; white-space: nowrap; }
     td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; white-space: nowrap; }
     tr:hover { background-color: #f8fafc; }
-    
     .badge { font-size: 10px; font-weight: bold; padding: 3px 7px; border-radius: 4px; color: white; display: inline-block; }
-    .bg-blue { background: #0284c7; }
     .bg-amber { background: #d97706; }
     .bg-danger { background: #ef4444; }
     .bg-success { background: #059669; }
+    .stok-pill { background: #eef2ff; color: #312e81; border: 1px solid #c7d2fe; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 12px; display: inline-block; }
   </style>
 </head>
 <body>
@@ -44,9 +37,9 @@
         <a href="index.html" style="display: inline-block; background: #312e81; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; margin-bottom: 8px;">
           🏠 Kembali ke Menu Utama
         </a>
-        <h2>📦 Stok & Master Data Barang</h2>
+        <h2>📦 Master Barang & Sisa Stok Fisik</h2>
       </div>
-      <span style="font-size: 12px; background: #312e81; padding: 5px 10px; border-radius: 15px;">Database Terhubung</span>
+      <a href="kulakan.html" style="background: #10b981; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;">+ Tambah / Kulakan Barang</a>
     </div>
   </header>
 
@@ -58,6 +51,10 @@
         <div class="stat-title">Total Jenis Barang</div>
         <div class="stat-value" id="statTotalItem">0 Item</div>
       </div>
+      <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="stat-title">Total Nilai Modal Stok</div>
+        <div class="stat-value" id="statNilaiModal" style="color: #7c3aed;">Rp 0</div>
+      </div>
       <div class="stat-card" style="border-left: 4px solid #ef4444;">
         <div class="stat-title">Stok Menipis / Habis</div>
         <div class="stat-value" id="statStokMenipis" style="color: #ef4444;">0 Item</div>
@@ -67,7 +64,7 @@
     <!-- TABEL MASTER DATA BARANG & STOK -->
     <div class="card">
       <div class="search-box">
-        <input type="text" id="inputCari" onkeyup="filterBarang()" placeholder="🔍 Cari nama barang atau nomor barcode...">
+        <input type="text" id="inputCari" onkeyup="filterBarang()" placeholder="🔍 Cari nama barang, kode, atau nomor barcode...">
         <button type="button" onclick="loadDataBarang()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; white-space: nowrap;">🔄 Refresh Data</button>
       </div>
 
@@ -75,19 +72,21 @@
         <table>
           <thead>
             <tr>
-              <th>No</th>
+              <th>Kode</th>
               <th>Nama Barang</th>
               <th>Barcode</th>
-              <th>Harga Jual</th>
-              <th>Kulakan Awal</th>
+              <th>Kemasan & Pecahan</th>
+              <th>Harga Jual Utama</th>
+              <th>Harga Ketengan</th>
               <th>Terjual</th>
               <th>Sisa Stok Fisik</th>
-              <th>Status Stok</th>
+              <th>Nilai Modal</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody id="tableBodyBarang">
             <tr>
-              <td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang & sisa stok...</td>
+              <td colspan="10" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang & sisa stok...</td>
             </tr>
           </tbody>
         </table>
@@ -108,11 +107,11 @@
       var tbody = document.getElementById('tableBodyBarang');
 
       if (!scriptUrl) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #ef4444; padding: 20px;">URL Database belum diisi! Silakan atur melalui Menu Utama.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data sisa stok barang...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #94a3b8; padding: 20px;">Memuat data master barang...</td></tr>';
 
       fetch(scriptUrl)
         .then(function(res) { return res.json(); })
@@ -122,12 +121,12 @@
             renderTableBarang(masterBarang);
             updateStats();
           } else {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data dari Google Sheets.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #ef4444; padding: 20px;">Gagal mengambil data dari Google Sheets.</td></tr>';
           }
         })
         .catch(function(err) {
           console.error(err);
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">Terjadi kesalahan koneksi.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #ef4444; padding: 20px;">Terjadi kesalahan koneksi.</td></tr>';
         });
     }
 
@@ -136,7 +135,7 @@
       tbody.innerHTML = '';
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada data barang tersimpan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada data di Master Barang. Silakan input lewat Form Kulakan.</td></tr>';
         return;
       }
 
@@ -144,27 +143,41 @@
         var item = data[i];
         var barcodeTxt = item.barcode ? `<code>${item.barcode}</code>` : '<span style="color:#cbd5e1;">-</span>';
         var hargaUtama = parseFloat(item.jualKemasanUtama) || 0;
-        
-        var totalKulakan = parseFloat(item.totalKemasanUtama) || 0;
-        var totalTerjual = parseFloat(item.totalTerjual) || 0;
-        var sisaStok = item.sisaStok !== undefined ? parseFloat(item.sisaStok) : (totalKulakan - totalTerjual);
+        var hargaKecil = parseFloat(item.jualEceranKecil) || 0;
+        var pecahan = parseInt(item.pecahan) || 1;
+        var satuanUtama = item.satuanUtama || 'Pcs';
+
+        var infoKemasan = pecahan > 1
+          ? `1 ${satuanUtama} = <b>${pecahan} ${item.labelPecahan}</b>`
+          : `1 ${satuanUtama} (Tunggal)`;
+
+        var hargaKetenganTxt = pecahan > 1
+          ? `<span style="color:#d97706; font-weight:bold;">Rp ${hargaKecil.toLocaleString('id-ID')}</span> <small>/${item.labelPecahan}</small>`
+          : '<span style="color:#94a3b8;">-</span>';
+
+        var sisaStokUtama = parseFloat(item.sisaStok) || 0;
+        var sisaStokKecil = parseFloat(item.sisaStokKecil) || 0;
+        var hppKecil = parseFloat(item.hppEceranKecil) || 0;
+        var nilaiModalItem = Math.max(0, sisaStokKecil) * hppKecil;
 
         var statusBadge = '<span class="badge bg-success">Aman</span>';
-        if (sisaStok <= 0) {
+        if (sisaStokKecil <= 0) {
           statusBadge = '<span class="badge bg-danger">Habis!</span>';
-        } else if (sisaStok <= 5) {
+        } else if (sisaStokUtama <= 5) {
           statusBadge = '<span class="badge bg-amber">⚠️ Menipis</span>';
         }
 
         tbody.innerHTML += `
           <tr>
-            <td>${i + 1}</td>
+            <td><small style="color:#64748b; font-weight:bold;">${item.kodeBarang || '-'}</small></td>
             <td><b>${item.namaBarang}</b></td>
             <td>${barcodeTxt}</td>
-            <td style="color: #059669; font-weight: bold;">Rp ${hargaUtama.toLocaleString('id-ID')}</td>
-            <td style="color: #64748b; text-align: center;">${totalKulakan}</td>
-            <td style="color: #d97706; text-align: center;">${totalTerjual}</td>
-            <td style="font-size: 14px; font-weight: bold; color: #0f172a; text-align: center;">${sisaStok}</td>
+            <td>${infoKemasan}</td>
+            <td style="color: #059669; font-weight: bold;">Rp ${hargaUtama.toLocaleString('id-ID')} <small style="color:#64748b; font-weight:normal;">/${satuanUtama}</small></td>
+            <td>${hargaKetenganTxt}</td>
+            <td style="color: #64748b;">${item.terjualText || (item.totalTerjual + ' ' + satuanUtama)}</td>
+            <td><span class="stok-pill">${item.sisaStokText || (sisaStokUtama + ' ' + satuanUtama)}</span></td>
+            <td style="font-weight:bold; color:#4338ca;">Rp ${Math.round(nilaiModalItem).toLocaleString('id-ID')}</td>
             <td>${statusBadge}</td>
           </tr>
         `;
@@ -176,7 +189,8 @@
       var filtered = masterBarang.filter(function(item) {
         var nama = (item.namaBarang || '').toLowerCase();
         var barcode = (item.barcode || '').toString().toLowerCase();
-        return nama.includes(keyword) || barcode.includes(keyword);
+        var kode = (item.kodeBarang || '').toString().toLowerCase();
+        return nama.includes(keyword) || barcode.includes(keyword) || kode.includes(keyword);
       });
       renderTableBarang(filtered);
     }
@@ -184,13 +198,18 @@
     function updateStats() {
       document.getElementById('statTotalItem').innerText = masterBarang.length + ' Item';
       var countMenipis = 0;
+      var totalModal = 0;
+
       masterBarang.forEach(function(item) {
-        var kulakan = parseFloat(item.totalKemasanUtama) || 0;
-        var terjual = parseFloat(item.totalTerjual) || 0;
-        var sisa = item.sisaStok !== undefined ? parseFloat(item.sisaStok) : (kulakan - terjual);
-        if (sisa <= 5) countMenipis++;
+        var sisaUtama = parseFloat(item.sisaStok) || 0;
+        var sisaKecil = parseFloat(item.sisaStokKecil) || 0;
+        var hppKecil = parseFloat(item.hppEceranKecil) || 0;
+        if (sisaUtama <= 5) countMenipis++;
+        totalModal += Math.max(0, sisaKecil) * hppKecil;
       });
+
       document.getElementById('statStokMenipis').innerText = countMenipis + ' Item';
+      document.getElementById('statNilaiModal').innerText = 'Rp ' + Math.round(totalModal).toLocaleString('id-ID');
     }
   </script>
 </body>
