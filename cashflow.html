@@ -3,24 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arus Kas & Total Aset - Toko Feby</title>
+  <title>Master Dompet & Arus Kas - Toko Feby</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
-    
+    body { background-color: #f1f5f9; color: #334155; padding-bottom: 50px; }
     header { background-color: #1e1b4b; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .header-content { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .header-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 1100px; margin: 15px auto; padding: 0 12px; }
+    .card { background: white; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .section-title { font-weight: bold; font-size: 15px; color: #1e293b; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    .stat-card { background: white; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .stat-title { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 19px; font-weight: bold; color: #0f172a; }
     
-    .container { max-width: 1000px; margin: 15px auto; padding: 0 12px; }
+    .dompet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+    .dompet-item { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; }
+    .dompet-badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: #e0e7ff; color: #3730a3; }
     
-    .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .forms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 15px; }
+    label { display: block; font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 3px; margin-top: 8px; }
+    input, select { width: 100%; padding: 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
+    .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 12px; color: white; }
+    .btn-refresh { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
-    .stat-card { background: white; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .stat-title { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-    .stat-value { font-size: 22px; font-weight: bold; color: #0f172a; }
-    
-    .btn-refresh { background: #0284c7; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #f8fafc; padding: 9px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #475569; }
+    td { padding: 9px; border-bottom: 1px solid #f1f5f9; }
   </style>
 </head>
 <body>
@@ -28,10 +37,10 @@
   <header>
     <div class="header-content">
       <div>
-        <a href="index.html" style="display: inline-block; background: #312e81; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; margin-bottom: 8px;">
+        <a href="index.html" style="display: inline-block; background: #312e81; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; margin-bottom: 6px;">
           🏠 Kembali ke Menu Utama
         </a>
-        <h2>💰 Arus Kas & Estimasi Total Aset Warung</h2>
+        <h2>💰 Master Dompet & Analisis Arus Kas</h2>
       </div>
       <button class="btn-refresh" onclick="loadCashFlow()">🔄 Refresh Data</button>
     </div>
@@ -41,51 +50,162 @@
     
     <!-- KARTU UTAMA TOTAL ASET WARUNG -->
     <div class="card" style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: white;">
-      <div style="font-size: 13px; color: #c7d2fe; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">ESTIMASI TOTAL ASET TOKO FEBY</div>
-      <div style="font-size: 36px; font-weight: 800; color: #38bdf8; margin-top: 6px;" id="statTotalAset">Rp 0</div>
-      <div style="font-size: 12px; color: #a5b4fc; margin-top: 8px; line-height: 1.5;">
-        💡 <b>Formula Perkembangan Warung:</b> Kas Bersih + Nilai Modal Stok Barang + Piutang Bon Pelanggan
+      <div style="font-size: 12px; color: #c7d2fe; font-weight: bold; text-transform: uppercase;">ESTIMASI TOTAL ASET TOKO FEBY</div>
+      <div style="font-size: 32px; font-weight: 800; color: #38bdf8; margin-top: 4px;" id="statTotalAset">Rp 0</div>
+      <div style="font-size: 12px; color: #a5b4fc; margin-top: 6px;">
+        💡 Total Saldo Seluruh Dompet + Nilai Modal Stok Barang + Piutang Bon Pelanggan
       </div>
     </div>
 
-    <!-- RINCIAN KOMPONEN ARUS KAS -->
+    <!-- RINGKASAN MODAL AWAL (UANG VS BARANG) & KEUANGAN -->
     <div class="stats-grid">
-      
-      <div class="stat-card" style="border-left: 5px solid #059669;">
-        <div class="stat-title">Total Omset (Penjualan)</div>
-        <div class="stat-value" id="statOmset" style="color: #059669;">Rp 0</div>
-        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Akumulasi dari tab Penjualan</div>
+      <div class="stat-card" style="border-left: 4px solid #0284c7;">
+        <div class="stat-title">Total Saldo Semua Dompet</div>
+        <div class="stat-value" id="statSaldoDompet" style="color: #0284c7;">Rp 0</div>
       </div>
-
-      <div class="stat-card" style="border-left: 5px solid #ef4444;">
-        <div class="stat-title">Total Pengeluaran (Kulakan)</div>
-        <div class="stat-value" id="statKulakan" style="color: #ef4444;">Rp 0</div>
-        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Akumulasi dari tab Nota</div>
+      <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="stat-title">Nilai Modal Stok Rak</div>
+        <div class="stat-value" id="statNilaiStok" style="color: #7c3aed;">Rp 0</div>
       </div>
-
-      <div class="stat-card" style="border-left: 5px solid #0284c7;">
-        <div class="stat-title">Estimasi Kas Bersih (Uang Laci)</div>
-        <div class="stat-value" id="statKasBersih" style="color: #0284c7;">Rp 0</div>
-        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Total Omset - Total Kulakan</div>
-      </div>
-
-      <div class="stat-card" style="border-left: 5px solid #8b5cf6;">
-        <div class="stat-title">Nilai Modal Barang (Stok Rak)</div>
-        <div class="stat-value" id="statNilaiStok" style="color: #8b5cf6;">Rp 0</div>
-        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Akumulasi HPP di Detail_Barang</div>
-      </div>
-
-      <div class="stat-card" style="border-left: 5px solid #d97706;">
-        <div class="stat-title">Total Piutang Gantung (Bon)</div>
+      <div class="stat-card" style="border-left: 4px solid #d97706;">
+        <div class="stat-title">Piutang Bon Pelanggan</div>
         <div class="stat-value" id="statPiutang" style="color: #d97706;">Rp 0</div>
-        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Sisa bon belum lunas</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #059669;">
+        <div class="stat-title">Modal Awal: Uang</div>
+        <div class="stat-value" id="statModalUang" style="color: #059669;">Rp 0</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #0d9488;">
+        <div class="stat-title">Modal Awal: Barang</div>
+        <div class="stat-value" id="statModalBarang" style="color: #0d9488;">Rp 0</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #ef4444;">
+        <div class="stat-title">Pengeluaran Operasional</div>
+        <div class="stat-value" id="statPengeluaranOps" style="color: #ef4444;">Rp 0</div>
+      </div>
+    </div>
+
+    <!-- MASTER DOMPET (10 DOMPET + TAMBAH DOMPET) -->
+    <div class="card">
+      <div class="section-title">
+        <span>👛 Master Dompet (Saldo Seharusnya di Tiap Akun)</span>
+        <button type="button" onclick="tambahDompetBaru()" style="background: #059669; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">+ Tambah Dompet Baru</button>
+      </div>
+      <div class="dompet-grid" id="gridDompet">
+        <div style="color: #94a3b8; font-size: 12px;">Memuat daftar dompet...</div>
+      </div>
+    </div>
+
+    <!-- 3 FORM INPUT MUTASI KAS -->
+    <div class="forms-grid">
+      
+      <!-- FORM 1: INPUT MODAL AWAL (UANG VS BARANG) -->
+      <div class="card">
+        <div class="section-title">🏦 Input Modal Awal</div>
+        <label>Bentuk Modal Awal</label>
+        <select id="jenisModal" onchange="toggleDompetModal()">
+          <option value="Modal Awal Uang">💵 Modal Berbentuk Uang</option>
+          <option value="Modal Awal Barang">📦 Modal Berbentuk Barang (Nilai Stok Awal)</option>
+        </select>
+
+        <div id="wrapDompetModal">
+          <label>Masuk ke Dompet Mana?</label>
+          <select id="dompetModal" class="select-dompet"></select>
+        </div>
+
+        <label>Nominal Modal (Rp)</label>
+        <input type="number" id="nominalModal" placeholder="0">
+
+        <label>Keterangan</label>
+        <input type="text" id="ketModal" placeholder="Contoh: Modal awal buka warung">
+
+        <button type="button" class="btn" style="background: #059669;" onclick="simpanModalAwal()">💾 Simpan Modal Awal</button>
       </div>
 
+      <!-- FORM 2: PENGELUARAN OPERASIONAL -->
+      <div class="card">
+        <div class="section-title">🧾 Pengeluaran Operasional</div>
+        <label>Kategori Pengeluaran</label>
+        <select id="katOps">
+          <option value="Listrik & Token">⚡ Tagihan Listrik / Token</option>
+          <option value="WiFi / Internet">📶 Tagihan WiFi / Kuota</option>
+          <option value="Kresek & Plastik">🛍️ Kresek / Plastik / Kemasan</option>
+          <option value="Bensin & Transport">⛽ Bensin / Ongkir / Transport</option>
+          <option value="Kebersihan & Peralatan">🧹 Kebersihan / Perlengkapan</option>
+          <option value="Lain-lain">📌 Operasional Lainnya</option>
+        </select>
+
+        <label>Ambil Uang dari Dompet</label>
+        <select id="dompetOps" class="select-dompet"></select>
+
+        <label>Nominal Pengeluaran (Rp)</label>
+        <input type="number" id="nominalOps" placeholder="0">
+
+        <label>Keterangan Detail</label>
+        <input type="text" id="ketOps" placeholder="Contoh: Beli kresek hitam 2 pak & bensin">
+
+        <button type="button" class="btn" style="background: #ef4444;" onclick="simpanPengeluaranOps()">💸 Catat Pengeluaran</button>
+      </div>
+
+      <!-- FORM 3: TRANSFER ANTAR DOMPET / TARIK TUNAI / TOP UP -->
+      <div class="card">
+        <div class="section-title">🔄 Transfer / Tarik Tunai / Top Up</div>
+        <label>Jenis Pergerakan Uang</label>
+        <select id="jenisTransfer">
+          <option value="Transfer Antar Bank">🏦 Transfer Antar Bank</option>
+          <option value="Tarik Tunai">💵 Tarik Tunai (Bank/E-Wallet → Kas)</option>
+          <option value="Setor Tunai">📥 Setor Tunai (Kas → Bank/Modal)</option>
+          <option value="Top Up E-Wallet">📱 Top Up E-Wallet (DANA/GoPay/ShopeePay)</option>
+        </select>
+
+        <label>Dari Dompet (Sumber Uang)</label>
+        <select id="dariDompet" class="select-dompet"></select>
+
+        <label>Ke Dompet (Tujuan Uang)</label>
+        <select id="keDompet" class="select-dompet"></select>
+
+        <label>Nominal (Rp)</label>
+        <input type="number" id="nominalTransfer" placeholder="0">
+
+        <label>Catatan (Opsional)</label>
+        <input type="text" id="ketTransfer" placeholder="Contoh: Tarik tunai BRI ke laci">
+
+        <button type="button" class="btn" style="background: #4338ca;" onclick="simpanTransferDompet()">🔁 Catat Pindah Dana</button>
+      </div>
+
+    </div>
+
+    <!-- RIWAYAT MUTASI KAS (ASAL & TUJUAN UANG) -->
+    <div class="card">
+      <div class="section-title">📜 Riwayat Aliran & Mutasi Kas Terbaru</div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Jenis Transaksi</th>
+              <th>Dari Dompet</th>
+              <th>Ke Dompet</th>
+              <th>Nominal</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyMutasi">
+            <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:15px;">Memuat riwayat mutasi...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
 
   <script>
+    var daftarDompetGlobal = [];
+
+    function getTodayWIB() {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    }
+
     window.onload = function() {
       loadCashFlow();
     };
@@ -105,19 +225,197 @@
           if (res.result === 'success') {
             var d = res.data;
             document.getElementById('statTotalAset').innerText = 'Rp ' + (d.totalAsetWarung || 0).toLocaleString('id-ID');
-            document.getElementById('statOmset').innerText = 'Rp ' + (d.totalPenjualan || 0).toLocaleString('id-ID');
-            document.getElementById('statKulakan').innerText = 'Rp ' + (d.totalKulakan || 0).toLocaleString('id-ID');
-            document.getElementById('statKasBersih').innerText = 'Rp ' + (d.kasBersih || 0).toLocaleString('id-ID');
+            document.getElementById('statSaldoDompet').innerText = 'Rp ' + (d.totalSaldoDompet || 0).toLocaleString('id-ID');
             document.getElementById('statNilaiStok').innerText = 'Rp ' + (d.totalNilaiStok || 0).toLocaleString('id-ID');
             document.getElementById('statPiutang').innerText = 'Rp ' + (d.totalPiutang || 0).toLocaleString('id-ID');
+            document.getElementById('statModalUang').innerText = 'Rp ' + (d.modalAwalUang || 0).toLocaleString('id-ID');
+            document.getElementById('statModalBarang').innerText = 'Rp ' + (d.modalAwalBarang || 0).toLocaleString('id-ID');
+            document.getElementById('statPengeluaranOps').innerText = 'Rp ' + (d.totalPengeluaranOps || 0).toLocaleString('id-ID');
+
+            daftarDompetGlobal = d.daftarDompet || [];
+            renderDompet(daftarDompetGlobal);
+            renderMutasi(d.riwayatMutasi || []);
           } else {
-            alert('Gagal mengambil data arus kas.');
+            alert('Gagal memuat data: ' + (res.message || 'Error'));
           }
         })
         .catch(function(err) {
           console.error(err);
           alert('Terjadi kesalahan koneksi saat memuat Cash Flow.');
         });
+    }
+
+    function renderDompet(list) {
+      var grid = document.getElementById('gridDompet');
+      grid.innerHTML = '';
+
+      var selects = document.querySelectorAll('.select-dompet');
+      selects.forEach(function(sel) { sel.innerHTML = ''; });
+
+      list.forEach(function(dmp) {
+        var warnaSaldo = dmp.saldo < 0 ? '#dc2626' : '#0f172a';
+        grid.innerHTML += `
+          <div class="dompet-item">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <b style="font-size:13px; color:#1e293b;">${dmp.nama}</b>
+              <span class="dompet-badge">${dmp.kategori}</span>
+            </div>
+            <div style="font-size:18px; font-weight:800; color:${warnaSaldo}; margin:4px 0;">Rp ${(dmp.saldo || 0).toLocaleString('id-ID')}</div>
+            <div style="font-size:10px; color:#64748b;">
+              Masuk: Rp ${(dmp.totalMasuk || 0).toLocaleString('id-ID')} | Keluar: Rp ${(dmp.totalKeluar || 0).toLocaleString('id-ID')}
+            </div>
+          </div>
+        `;
+
+        selects.forEach(function(sel) {
+          var opt = document.createElement('option');
+          opt.value = dmp.nama;
+          opt.text = dmp.nama + ' (Rp ' + (dmp.saldo || 0).toLocaleString('id-ID') + ')';
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    function renderMutasi(list) {
+      var tbody = document.getElementById('tbodyMutasi');
+      tbody.innerHTML = '';
+      if (!list || list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:15px;">Belum ada catatan mutasi kas.</td></tr>';
+        return;
+      }
+
+      list.forEach(function(m) {
+        var tgl = typeof m.tanggal === 'string' ? m.tanggal.substring(0, 10) : m.tanggal;
+        tbody.innerHTML += `
+          <tr>
+            <td>${tgl}</td>
+            <td><b>${m.jenis}</b><br><small style="color:#64748b;">${m.kategori || ''}</small></td>
+            <td style="color:#dc2626;">${m.dari || '-'}</td>
+            <td style="color:#059669; font-weight:bold;">${m.ke || '-'}</td>
+            <td style="font-weight:bold;">Rp ${(parseFloat(m.nominal) || 0).toLocaleString('id-ID')}</td>
+            <td>${m.keterangan || '-'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function toggleDompetModal() {
+      var jenis = document.getElementById('jenisModal').value;
+      document.getElementById('wrapDompetModal').style.display = (jenis === 'Modal Awal Uang') ? 'block' : 'none';
+    }
+
+    function kirimMutasi(payload, onSuccessReset) {
+      var scriptUrl = localStorage.getItem('gas_script_url');
+      if (!scriptUrl) { alert('URL Database belum diisi!'); return; }
+
+      fetch(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(res) {
+        if (res.result === 'success') {
+          alert('✅ ' + (res.message || 'Berhasil dicatat!'));
+          if (onSuccessReset) onSuccessReset();
+          loadCashFlow();
+        } else {
+          alert('❌ Gagal: ' + (res.message || 'Error'));
+        }
+      })
+      .catch(function(err) {
+        console.error(err);
+        alert('❌ Gagal terhubung ke server.');
+      });
+    }
+
+    function simpanModalAwal() {
+      var jenis = document.getElementById('jenisModal').value;
+      var keDompet = (jenis === 'Modal Awal Uang') ? document.getElementById('dompetModal').value : 'Stok Barang';
+      var nominal = parseFloat(document.getElementById('nominalModal').value) || 0;
+      var ket = document.getElementById('ketModal').value.trim();
+
+      if (nominal <= 0) { alert('Masukkan nominal modal yang valid!'); return; }
+
+      kirimMutasi({
+        action: 'catat_mutasi',
+        tanggal: getTodayWIB(),
+        jenisTransaksi: jenis,
+        dariDompet: '-',
+        keDompet: keDompet,
+        nominal: nominal,
+        kategori: 'Modal Awal',
+        keterangan: ket || jenis
+      }, function() {
+        document.getElementById('nominalModal').value = '';
+        document.getElementById('ketModal').value = '';
+      });
+    }
+
+    function simpanPengeluaranOps() {
+      var kat = document.getElementById('katOps').value;
+      var dari = document.getElementById('dompetOps').value;
+      var nominal = parseFloat(document.getElementById('nominalOps').value) || 0;
+      var ket = document.getElementById('ketOps').value.trim();
+
+      if (nominal <= 0) { alert('Masukkan nominal pengeluaran yang valid!'); return; }
+
+      kirimMutasi({
+        action: 'catat_mutasi',
+        tanggal: getTodayWIB(),
+        jenisTransaksi: 'Pengeluaran Operasional',
+        dariDompet: dari,
+        keDompet: '-',
+        nominal: nominal,
+        kategori: kat,
+        keterangan: ket || kat
+      }, function() {
+        document.getElementById('nominalOps').value = '';
+        document.getElementById('ketOps').value = '';
+      });
+    }
+
+    function simpanTransferDompet() {
+      var jenis = document.getElementById('jenisTransfer').value;
+      var dari = document.getElementById('dariDompet').value;
+      var ke = document.getElementById('keDompet').value;
+      var nominal = parseFloat(document.getElementById('nominalTransfer').value) || 0;
+      var ket = document.getElementById('ketTransfer').value.trim();
+
+      if (dari === ke) { alert('Dompet asal dan dompet tujuan tidak boleh sama!'); return; }
+      if (nominal <= 0) { alert('Masukkan nominal transfer yang valid!'); return; }
+
+      kirimMutasi({
+        action: 'catat_mutasi',
+        tanggal: getTodayWIB(),
+        jenisTransaksi: jenis,
+        dariDompet: dari,
+        keDompet: ke,
+        nominal: nominal,
+        kategori: 'Mutasi Antar Dompet',
+        keterangan: ket || jenis
+      }, function() {
+        document.getElementById('nominalTransfer').value = '';
+        document.getElementById('ketTransfer').value = '';
+      });
+    }
+
+    function tambahDompetBaru() {
+      var nama = prompt('Masukkan Nama Dompet / Bank / E-Wallet Baru (contoh: BCA, OVO, Kas Kecil):', '');
+      if (!nama || nama.trim() === '') return;
+
+      var kategori = prompt('Masukkan Kategori Dompet (Tunai / Bank / E-Wallet / Lainnya):', 'Bank') || 'Lainnya';
+      var saldoStr = prompt('Masukkan Saldo Awal saat ini (isi 0 jika kosong):', '0');
+      var saldoAwal = parseFloat(saldoStr) || 0;
+
+      kirimMutasi({
+        action: 'tambah_dompet',
+        tanggal: getTodayWIB(),
+        namaDompet: nama.trim(),
+        kategori: kategori.trim(),
+        saldoAwal: saldoAwal,
+        keterangan: 'Dompet tambahan'
+      });
     }
   </script>
 </body>
