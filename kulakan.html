@@ -4,27 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Form Nota Kulakan & Scan Barcode - Toko Feby</title>
-  <!-- Library Scanner Barcode -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: #f1f5f9; padding: 15px; color: #334155; padding-bottom: 40px; }
+    body { background-color: #f1f5f9; padding: 15px; color: #334155; padding-bottom: 50px; }
     header { background-color: #0f172a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-radius: 8px; }
     .box { background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .title { font-weight: bold; font-size: 15px; margin-bottom: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+    .title { font-weight: bold; font-size: 15px; margin-bottom: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
     label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #475569; }
     input, select, textarea { width: 100%; padding: 7px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 5px; background: #fff; }
-    .item-card { background: #f8fafc; border: 1px solid #94a3b8; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    input:focus, select:focus { border-color: #4338ca; outline: none; }
+    .item-card { background: #f8fafc; border: 1.5px solid #94a3b8; border-radius: 8px; padding: 12px; margin-bottom: 14px; position: relative; }
+    .item-card.is-existing { border-color: #d97706; background: #fffbeb; }
+    .item-card.is-new { border-color: #059669; }
     .btn { display: inline-block; padding: 10px 15px; font-size: 13px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; text-align: center; }
     .btn-tambah { background: #4338ca; color: white; width: 100%; margin-top: 5px; font-size: 14px; }
     .btn-hapus { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; float: right; border-radius: 4px; }
     .btn-simpan { background: #10b981; color: white; width: 100%; font-size: 16px; padding: 12px; margin-top: 10px; }
-    .btn-reset { background: #94a3b8; color: white; padding: 12px; margin-top: 10px; }
-    .btn-scan { background: #6366f1; color: white; padding: 6px; font-size: 11px; margin-top: 2px; }
+    .btn-simpan:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-reset { background: #64748b; color: white; padding: 12px; margin-top: 10px; }
+    .btn-scan { background: #6366f1; color: white; padding: 6px 10px; font-size: 11px; white-space: nowrap; }
+    .btn-saran { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; padding: 2px 6px; font-size: 10px; border-radius: 4px; cursor: pointer; margin-top: 3px; display: inline-block; font-weight: bold; }
     .total-display { background: #0f172a; color: #38bdf8; padding: 12px; font-size: 20px; font-weight: bold; border-radius: 6px; text-align: right; }
-    .tier-box { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; margin-top: 5px; }
+    .tier-box { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; margin-top: 6px; }
     .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; color: #fff; }
+    .alert-db { padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 10px; line-height: 1.4; }
+    .alert-existing { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; }
+    .alert-new { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; }
+    .preview-stok { background: #eef2ff; border: 1px dashed #6366f1; color: #3730a3; padding: 6px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -34,6 +42,7 @@
       <a href="index.html" style="color: #93c5fd; text-decoration: none; font-size: 12px; font-weight: bold;">🏠 Menu Utama</a>
       <h2 style="font-size: 18px; margin-top: 2px;">🛒 Form Kulakan & Scan Barcode</h2>
     </div>
+    <span id="dbLoadStatus" style="font-size: 11px; background: #1e293b; padding: 5px 10px; border-radius: 12px; color: #93c5fd;">Memuat Master...</span>
   </header>
 
   <!-- Area Scanner Modal -->
@@ -44,6 +53,9 @@
       <button type="button" class="btn btn-hapus" onclick="closeScanner()" style="float:none; margin-top:15px; width:100%; padding:10px; font-size:13px;">Batal / Tutup</button>
     </div>
   </div>
+
+  <!-- Datalist untuk Autocomplete Nama Barang dari Database -->
+  <datalist id="datalistMasterBarang"></datalist>
 
   <form id="notaForm" onsubmit="return false;">
     
@@ -56,19 +68,27 @@
           <input type="text" id="noNota">
         </div>
         <div>
-          <label>Tanggal Belanja</label>
+          <label>Tanggal Belanja (WIB)</label>
           <input type="date" id="tglNota">
         </div>
         <div>
-          <label>Nama Supplier</label>
+          <label>Nama Supplier / Grosir</label>
           <input type="text" id="supplier" placeholder="Agen / Distributor / Grosir">
         </div>
         <div>
-          <label>Metode Bayar</label>
+          <label>Sumber Dana / Dompet Bayar</label>
           <select id="metodeBayar">
-            <option value="Tunai">Tunai</option>
-            <option value="Transfer">Transfer</option>
-            <option value="Tempo">Tempo / Hutang</option>
+            <option value="Kas Laci">💵 Kas Laci (Tunai Laci)</option>
+            <option value="Kas Modal">💰 Kas Modal (Tunai Simpanan)</option>
+            <option value="Bank Mandiri">🏦 Bank Mandiri</option>
+            <option value="Bank BRI">🏦 Bank BRI</option>
+            <option value="SeaBank">🏦 SeaBank</option>
+            <option value="Bank Nobu">🏦 Bank Nobu</option>
+            <option value="DANA">📱 DANA</option>
+            <option value="GoPay">📱 GoPay</option>
+            <option value="ShopeePay">📱 ShopeePay</option>
+            <option value="Buku Warung">📒 Buku Warung</option>
+            <option value="Tempo">⏳ Tempo / Hutang Supplier</option>
           </select>
         </div>
       </div>
@@ -76,7 +96,10 @@
 
     <!-- Daftar Barang -->
     <div class="box">
-      <div class="title">📦 Detail Barang & Hitungan Ketengan</div>
+      <div class="title">
+        <span>📦 Detail Barang & Hitungan Ketengan</span>
+        <button type="button" onclick="muatMasterBarang()" style="background:#e2e8f0; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🔄 Refresh Master</button>
+      </div>
       
       <div id="containerBarang"></div>
 
@@ -86,7 +109,7 @@
     <!-- Catatan & Total -->
     <div class="box">
       <label>Catatan Nota</label>
-      <textarea id="catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
+      <textarea id="catatan" rows="2" placeholder="Catatan tambahan (misal: bonus barang, ongkir, jatuh tempo)..."></textarea>
       <div style="margin-top: 10px;">
         <label>TOTAL NOTA BELANJA:</label>
         <div class="total-display" id="displayTotal">Rp 0</div>
@@ -96,7 +119,7 @@
     <!-- Tombol Aksi -->
     <div class="grid" style="grid-template-columns: 1fr 2fr;">
       <button type="button" class="btn btn-reset" onclick="resetForm()">🔄 Reset</button>
-      <button type="button" class="btn btn-simpan" id="btnSimpan" onclick="simpanKeGoogleSheet()">☁️ Simpan ke Google Sheet</button>
+      <button type="button" class="btn btn-simpan" id="btnSimpan" onclick="simpanKeGoogleSheet()">☁️ Simpan Kulakan & Update Stok</button>
     </div>
 
   </form>
@@ -105,6 +128,45 @@
     var countBarang = 0;
     var activeScanId = null;
     var html5QrcodeScanner = null;
+    var masterBarangList = [];
+
+    function getTodayWIB() {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    }
+
+    function muatMasterBarang() {
+      var scriptUrl = localStorage.getItem('gas_script_url');
+      var statusEl = document.getElementById('dbLoadStatus');
+      if (!scriptUrl) {
+        statusEl.innerText = '🔴 URL Belum Diatur';
+        statusEl.style.color = '#fca5a5';
+        return;
+      }
+
+      statusEl.innerText = '⌛ Memuat Master...';
+      fetch(scriptUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+          if (res.result === 'success') {
+            masterBarangList = res.data || [];
+            var dl = document.getElementById('datalistMasterBarang');
+            dl.innerHTML = '';
+            masterBarangList.forEach(function(item) {
+              var opt = document.createElement('option');
+              opt.value = item.namaBarang;
+              dl.appendChild(opt);
+            });
+            statusEl.innerText = '🟢 Master: ' + masterBarangList.length + ' Produk';
+            statusEl.style.color = '#6ee7b7';
+          } else {
+            statusEl.innerText = '⚠️ Gagal Muat Master';
+          }
+        })
+        .catch(function(err) {
+          console.error(err);
+          statusEl.innerText = '⚠️ Offline / Error';
+        });
+    }
 
     function tambahBarang() {
       countBarang++;
@@ -113,26 +175,35 @@
 
       var div = document.createElement('div');
       div.id = 'item-' + id;
-      div.className = 'item-card';
+      div.className = 'item-card is-new';
 
       div.innerHTML = `
         <button type="button" class="btn btn-hapus" onclick="hapusBarang(${id})">🗑️ Hapus</button>
-        <div style="font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #4338ca;">Item #${id}</div>
+        <div style="font-weight: bold; font-size: 13px; margin-bottom: 6px; color: #4338ca;">
+          Item #${id} <span id="badgeMode-${id}" class="badge" style="background:#059669; margin-left:6px;">BARANG BARU</span>
+        </div>
+
+        <input type="hidden" id="kodeBarang-${id}" value="">
+
+        <!-- Banner Peringatan Status Database -->
+        <div id="alertDb-${id}" class="alert-db alert-new">
+          🆕 Barang baru — akan dibuatkan data master baru & dicatat ke riwayat kulakan.
+        </div>
         
         <div class="grid" style="grid-template-columns: 2fr 1.5fr 1fr; margin-bottom: 8px;">
           <div>
-            <label>Nama Barang</label>
-            <input type="text" id="namaBarang-${id}" placeholder="Contoh: Ultramilk / Djarum Super">
+            <label>Nama Barang (Ketik / Pilih dari Database)</label>
+            <input type="text" id="namaBarang-${id}" list="datalistMasterBarang" oninput="cekBarangEksisting(${id}, 'nama')" onchange="cekBarangEksisting(${id}, 'nama')" placeholder="Contoh: Djarum Super / Mama Lemon">
           </div>
           <div>
             <label>Barcode Produk</label>
             <div style="display:flex; gap:4px;">
-              <input type="text" id="barcode-${id}" placeholder="Scan/ketik barcode">
+              <input type="text" id="barcode-${id}" oninput="cekBarangEksisting(${id}, 'barcode')" onchange="cekBarangEksisting(${id}, 'barcode')" placeholder="Scan / ketik barcode">
               <button type="button" class="btn btn-scan" onclick="openScanner(${id})">📷 Scan</button>
             </div>
           </div>
           <div>
-            <label>Total Beli Nota (Rp)</label>
+            <label>Total Harga Beli Nota (Rp)</label>
             <input type="number" id="hargaBeliTotal-${id}" oninput="hitungRow(${id})" placeholder="0">
           </div>
         </div>
@@ -141,74 +212,198 @@
         <div style="background: #e0e7ff; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
           <div class="grid">
             <div>
-              <label>Qty Beli (Dus/Bal/Pres)</label>
-              <input type="number" id="qtyUtama-${id}" oninput="hitungRow(${id})" value="1" min="1">
+              <label>Qty Beli (Dus / Bal / Pres / Bks)</label>
+              <input type="number" id="qtyUtama-${id}" oninput="hitungRow(${id})" value="1" min="0.01" step="any">
             </div>
             <div>
-              <label>Isi Kemasan per Qty Utama</label>
-              <input type="number" id="isiPerUtama-${id}" oninput="hitungRow(${id})" value="24" min="1">
+              <label>Isi Satuan Utama per Qty Beli</label>
+              <input type="number" id="isiPerUtama-${id}" oninput="hitungRow(${id})" value="1" min="1">
             </div>
             <div>
               <label>Nama Satuan Utama</label>
               <select id="namaKemasanUtama-${id}" onchange="hitungRow(${id})">
-                <option value="Pcs/Bks">Pcs / Bungkus</option>
+                <option value="Dus">Dus</option>
+                <option value="Bungkus">Bungkus</option>
+                <option value="Pcs">Pcs</option>
+                <option value="Pak">Pak / Slop</option>
+                <option value="Renceng">Renceng</option>
                 <option value="Kg">Kg (Kilogram)</option>
                 <option value="Liter">Liter</option>
                 <option value="Botol">Botol</option>
                 <option value="Kotak">Kotak / UHT</option>
+                <option value="Karung">Karung</option>
               </select>
             </div>
+          </div>
+          <div style="font-size: 10px; color: #3730a3; margin-top: 4px;">
+            💡 Contoh: Beli <b>2 Dus</b> Mama Lemon → Qty Beli = <b>2</b>, Isi = <b>1</b>, Satuan = <b>Dus</b>. Beli <b>1 Slop</b> Rokok isi 10 Bks → Qty Beli = <b>1</b>, Isi = <b>10</b>, Satuan = <b>Bungkus</b>.
           </div>
         </div>
 
         <!-- LEVEL 1: UTAMA -->
         <div class="tier-box">
-          <div style="margin-bottom: 4px;"><span class="badge" style="background:#0284c7;">HARGA UTAMA (PER PCS / BKS / KG)</span></div>
+          <div style="margin-bottom: 4px;"><span class="badge" style="background:#0284c7;">LEVEL 1: SATUAN UTAMA</span></div>
           <div class="grid">
-            <div><label>Total Qty Utama</label><input type="number" id="totalKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold;"></div>
-            <div><label>HPP / Satuan</label><input type="text" id="hppKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold; color:#4338ca;"></div>
-            <div><label>Margin (%)</label><input type="number" id="marginKemasanUtama-${id}" oninput="hitungRow(${id})" value="10"></div>
-            <div><label>Harga Jual / Satuan</label><input type="number" id="jualKemasanUtama-${id}" style="background:#ecfdf5; font-weight:bold; color:#065f46;"></div>
+            <div><label>Total Masuk Utama</label><input type="number" id="totalKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold;"></div>
+            <div><label>HPP / Satuan Utama</label><input type="text" id="hppKemasanUtama-${id}" readonly style="background:#f1f5f9; font-weight:bold; color:#4338ca;"></div>
+            <div><label>Margin (%)</label><input type="number" id="marginKemasanUtama-${id}" oninput="hitungRow(${id}, true)" value="10"></div>
+            <div>
+              <label>Harga Jual / Utama (Rp)</label>
+              <input type="number" id="jualKemasanUtama-${id}" oninput="this.setAttribute('data-manual','true')" style="background:#ecfdf5; font-weight:bold; color:#065f46;">
+              <div id="saranUtama-${id}"></div>
+            </div>
           </div>
         </div>
 
         <!-- LEVEL 2: PECAHAN KETENGAN -->
         <div class="tier-box">
-          <div style="margin-bottom: 4px;"><span class="badge" style="background:#d97706;">KETENGAN MIKRO / ECERAN KECIL</span></div>
+          <div style="margin-bottom: 4px;"><span class="badge" style="background:#d97706;">LEVEL 2: PECAHAN KETENGAN / SATUAN KECIL</span></div>
           <div class="grid" style="margin-bottom: 5px;">
             <div style="grid-column: span 2;">
-              <label>Pecahan Ketengan:</label>
+              <label>Pilih Preset Pecahan per 1 Satuan Utama:</label>
               <select id="selectPecahan-${id}" onchange="pilihPreset(${id})">
-                <option value="1">1 (Kosong / Tidak Dipecah)</option>
-                <option value="12">12 (Rokok 12 Batang)</option>
+                <option value="1">1 (Tidak Dipecah / Satuan Tunggal)</option>
+                <option value="12">12 (Rokok 12 Batang / 1 Lusin)</option>
                 <option value="16">16 (Rokok 16 Batang)</option>
                 <option value="20">20 (Rokok 20 Batang)</option>
-                <option value="4">4 (Minyak ¼ Kg)</option>
-                <option value="2">2 (Minyak ½ Kg)</option>
-                <option value="custom">Ketik Jumlah Bebas...</option>
+                <option value="24">24 (1 Dus isi 24 Pcs)</option>
+                <option value="40">40 (1 Dus isi 40 Pcs)</option>
+                <option value="4">4 (Minyak / Gula ¼ Kg)</option>
+                <option value="2">2 (Minyak / Gula ½ Kg)</option>
+                <option value="custom">Ketik Jumlah Pecahan Bebas...</option>
               </select>
             </div>
             <div>
-              <label>Jumlah Pecahan</label>
+              <label>Isi Pecahan</label>
               <input type="number" id="jenisPecahan-${id}" oninput="hitungRow(${id})" value="1" min="1">
             </div>
             <div>
-              <label>Label Ketengan</label>
-              <input type="text" id="labelPecahan-${id}" placeholder="Batang / ¼ Kg / Pcs">
+              <label>Nama Satuan Kecil</label>
+              <input type="text" id="labelPecahan-${id}" oninput="hitungRow(${id})" value="Tidak Dipecah" placeholder="Pcs / Batang / ¼ Kg">
             </div>
           </div>
 
           <div class="grid" id="boxEceranKecil-${id}">
-            <div><label>Total Ketengan</label><input type="number" id="totalEceranKecil-${id}" readonly style="background:#f1f5f9; font-weight:bold;"></div>
+            <div><label>Total Masuk Kecil</label><input type="number" id="totalEceranKecil-${id}" readonly style="background:#f1f5f9; font-weight:bold;"></div>
             <div><label>HPP Ketengan</label><input type="text" id="hppEceranKecil-${id}" readonly style="background:#f1f5f9; font-weight:bold; color:#4338ca;"></div>
-            <div><label>Margin (%)</label><input type="number" id="marginEceranKecil-${id}" oninput="hitungRow(${id})" value="20"></div>
-            <div><label>Harga Jual Ketengan</label><input type="number" id="jualEceranKecil-${id}" style="background:#ecfdf5; font-weight:bold; color:#065f46;"></div>
+            <div><label>Margin (%)</label><input type="number" id="marginEceranKecil-${id}" oninput="hitungRow(${id}, true)" value="20"></div>
+            <div>
+              <label>Harga Jual Ketengan (Rp)</label>
+              <input type="number" id="jualEceranKecil-${id}" oninput="this.setAttribute('data-manual','true')" style="background:#ecfdf5; font-weight:bold; color:#065f46;">
+              <div id="saranKecil-${id}"></div>
+            </div>
           </div>
+
+          <div class="preview-stok" id="previewStok-${id}">📦 Stok Masuk: 0 Dus</div>
         </div>
       `;
 
       container.appendChild(div);
       hitungRow(id);
+    }
+
+    /* DETEKSI OTOMATIS BARANG YANG SUDAH ADA DI DATABASE */
+    function cekBarangEksisting(id, triggerSource) {
+      var namaVal = document.getElementById('namaBarang-' + id).value.trim().toLowerCase();
+      var barcodeVal = document.getElementById('barcode-' + id).value.trim();
+      var found = null;
+
+      if (triggerSource === 'barcode' && barcodeVal.length >= 3) {
+        found = masterBarangList.find(function(b) {
+          return b.barcode && b.barcode.toString().trim() === barcodeVal;
+        });
+      } else if (triggerSource === 'nama' && namaVal.length >= 2) {
+        found = masterBarangList.find(function(b) {
+          return b.namaBarang && b.namaBarang.toString().trim().toLowerCase() === namaVal;
+        });
+      }
+
+      var card = document.getElementById('item-' + id);
+      var alertBox = document.getElementById('alertDb-' + id);
+      var badge = document.getElementById('badgeMode-' + id);
+
+      if (found) {
+        // Hindari loop berulang jika item yang sama sudah dimuat
+        if (document.getElementById('kodeBarang-' + id).value === found.kodeBarang && found.kodeBarang) {
+          return;
+        }
+
+        card.className = 'item-card is-existing';
+        badge.innerText = 'UPDATE STOK & HARGA';
+        badge.style.background = '#d97706';
+
+        document.getElementById('kodeBarang-' + id).value = found.kodeBarang || '';
+        document.getElementById('namaBarang-' + id).value = found.namaBarang;
+        if (found.barcode && !barcodeVal) {
+          document.getElementById('barcode-' + id).value = found.barcode;
+        }
+
+        // Set Satuan Utama
+        var selUtama = document.getElementById('namaKemasanUtama-' + id);
+        var satuanDb = found.satuanUtama || 'Pcs';
+        var optionExists = Array.from(selUtama.options).some(function(opt) { return opt.value === satuanDb; });
+        if (!optionExists) {
+          var newOpt = document.createElement('option');
+          newOpt.value = satuanDb;
+          newOpt.text = satuanDb;
+          selUtama.add(newOpt);
+        }
+        selUtama.value = satuanDb;
+
+        // Set Pecahan Ketengan
+        var pecahanDb = parseInt(found.pecahan) || 1;
+        var selPecahan = document.getElementById('selectPecahan-' + id);
+        var presetMatch = Array.from(selPecahan.options).some(function(opt) { return opt.value === pecahanDb.toString(); });
+        selPecahan.value = presetMatch ? pecahanDb.toString() : 'custom';
+        document.getElementById('jenisPecahan-' + id).value = pecahanDb;
+        document.getElementById('labelPecahan-' + id).value = found.labelPecahan || (pecahanDb > 1 ? 'Pcs' : 'Tidak Dipecah');
+
+        // Isi Harga Jual lama dari database
+        var fUtama = document.getElementById('jualKemasanUtama-' + id);
+        var fKecil = document.getElementById('jualEceranKecil-' + id);
+        fUtama.value = parseFloat(found.jualKemasanUtama) || 0;
+        fUtama.setAttribute('data-manual', 'true');
+        fKecil.value = parseFloat(found.jualEceranKecil) || fUtama.value;
+        fKecil.setAttribute('data-manual', 'true');
+
+        var stokInfo = found.sisaStokText || (found.sisaStok + ' ' + satuanDb);
+        var hargaKetenganInfo = pecahanDb > 1 ? ` | Ketengan: Rp ${(parseFloat(found.jualEceranKecil)||0).toLocaleString('id-ID')}/${found.labelPecahan}` : '';
+
+        alertBox.className = 'alert-db alert-existing';
+        alertBox.innerHTML = `
+          ⚠️ <b>Barang Sudah Ada di Database (${found.kodeBarang || 'Master'})!</b><br>
+          Sisa Stok Saat Ini: <b>${stokInfo}</b> | Harga Jual Lama: <b>Rp ${(parseFloat(found.jualKemasanUtama)||0).toLocaleString('id-ID')}/${satuanDb}</b>${hargaKetenganInfo}.<br>
+          <i>Silakan isi Qty Beli & Total Harga Beli baru — stok akan otomatis ditambahkan & harga diperbarui.</i>
+        `;
+
+        hitungRow(id);
+      } else if (document.getElementById('kodeBarang-' + id).value !== '') {
+        // Reset kembali ke mode Barang Baru jika user menghapus/mengganti nama menjadi barang baru
+        card.className = 'item-card is-new';
+        badge.innerText = 'BARANG BARU';
+        badge.style.background = '#059669';
+        document.getElementById('kodeBarang-' + id).value = '';
+        document.getElementById('jualKemasanUtama-' + id).removeAttribute('data-manual');
+        document.getElementById('jualEceranKecil-' + id).removeAttribute('data-manual');
+        alertBox.className = 'alert-db alert-new';
+        alertBox.innerHTML = '🆕 Barang baru — akan dibuatkan data master baru & dicatat ke riwayat kulakan.';
+        hitungRow(id);
+      }
+    }
+
+    function pakaiSaranHarga(id, level, nilai) {
+      if (level === 'utama') {
+        var el = document.getElementById('jualKemasanUtama-' + id);
+        el.value = nilai;
+        el.setAttribute('data-manual', 'true');
+        if ((parseFloat(document.getElementById('jenisPecahan-' + id).value) || 1) <= 1) {
+          document.getElementById('jualEceranKecil-' + id).value = nilai;
+        }
+      } else {
+        var elK = document.getElementById('jualEceranKecil-' + id);
+        elK.value = nilai;
+        elK.setAttribute('data-manual', 'true');
+      }
     }
 
     /* SCANNER BARCODE KAMERA */
@@ -227,6 +422,8 @@
       if (html5QrcodeScanner) {
         html5QrcodeScanner.stop().then(function() {
           document.getElementById('scannerModal').style.display = 'none';
+        }).catch(function() {
+          document.getElementById('scannerModal').style.display = 'none';
         });
       } else {
         document.getElementById('scannerModal').style.display = 'none';
@@ -235,7 +432,8 @@
 
     function onScanSuccess(decodedText) {
       if (activeScanId) {
-        document.getElementById('barcode-' + activeScanId).value = decodedText;
+        document.getElementById('barcode-' + activeScanId).value = decodedText.trim();
+        cekBarangEksisting(activeScanId, 'barcode');
       }
       closeScanner();
     }
@@ -249,6 +447,7 @@
         inputAngka.value = val;
         if (val === '1') inputLabel.value = 'Tidak Dipecah';
         else if (val === '12' || val === '16' || val === '20') inputLabel.value = 'Batang';
+        else if (val === '24' || val === '40') inputLabel.value = 'Pcs';
         else if (val === '4') inputLabel.value = '¼ Kg';
         else if (val === '2') inputLabel.value = '½ Kg';
       }
@@ -263,25 +462,33 @@
       }
     }
 
-    function hitungRow(id) {
+    function hitungRow(id, forceMarginUpdate) {
       var qtyUtama = parseFloat(document.getElementById('qtyUtama-' + id).value) || 0;
       var isiPerUtama = parseFloat(document.getElementById('isiPerUtama-' + id).value) || 1;
       var totalBeli = parseFloat(document.getElementById('hargaBeliTotal-' + id).value) || 0;
       var pecahan = parseFloat(document.getElementById('jenisPecahan-' + id).value) || 1;
+      var satuanUtama = document.getElementById('namaKemasanUtama-' + id).value || 'Pcs';
+      var labelPecahan = document.getElementById('labelPecahan-' + id).value || 'Pcs';
 
       var totalKemasanUtama = qtyUtama * isiPerUtama;
       document.getElementById('totalKemasanUtama-' + id).value = totalKemasanUtama;
 
       var hppKemasan = totalKemasanUtama > 0 ? totalBeli / totalKemasanUtama : 0;
       var marginKemasan = parseFloat(document.getElementById('marginKemasanUtama-' + id).value) || 0;
-      var rekomendasiKemasan = Math.ceil((hppKemasan * (1 + marginKemasan / 100)) / 500) * 500;
+      var rekomendasiKemasan = hppKemasan > 0 ? Math.ceil((hppKemasan * (1 + marginKemasan / 100)) / 500) * 500 : 0;
       
       document.getElementById('hppKemasanUtama-' + id).value = Math.round(hppKemasan).toLocaleString('id-ID');
       
       var fKemasan = document.getElementById('jualKemasanUtama-' + id);
-      if (!fKemasan.value || fKemasan.getAttribute('data-auto') === "true") {
+      var saranUtamaEl = document.getElementById('saranUtama-' + id);
+
+      if (forceMarginUpdate || !fKemasan.getAttribute('data-manual')) {
         fKemasan.value = rekomendasiKemasan;
-        fKemasan.setAttribute('data-auto', 'true');
+        saranUtamaEl.innerHTML = '';
+      } else if (rekomendasiKemasan > 0 && parseFloat(fKemasan.value) !== rekomendasiKemasan) {
+        saranUtamaEl.innerHTML = `<span class="btn-saran" onclick="pakaiSaranHarga(${id}, 'utama', ${rekomendasiKemasan})">💡 Saran Margin: Rp ${rekomendasiKemasan.toLocaleString('id-ID')}</span>`;
+      } else {
+        saranUtamaEl.innerHTML = '';
       }
 
       var totalEceranKecil = totalKemasanUtama * pecahan;
@@ -289,17 +496,31 @@
 
       var hppEceranKecil = totalEceranKecil > 0 ? totalBeli / totalEceranKecil : 0;
       var marginEceranKecil = parseFloat(document.getElementById('marginEceranKecil-' + id).value) || 0;
-      var rekomendasiEceranKecil = Math.ceil((hppEceranKecil * (1 + marginEceranKecil / 100)) / 500) * 500;
+      var rekomendasiEceranKecil = hppEceranKecil > 0 ? Math.ceil((hppEceranKecil * (1 + marginEceranKecil / 100)) / 500) * 500 : 0;
       
       document.getElementById('hppEceranKecil-' + id).value = Math.round(hppEceranKecil).toLocaleString('id-ID');
 
       var fEceran = document.getElementById('jualEceranKecil-' + id);
+      var saranKecilEl = document.getElementById('saranKecil-' + id);
+
       if (pecahan <= 1) {
         fEceran.value = fKemasan.value;
-      } else if (!fEceran.value || fEceran.getAttribute('data-auto') === "true") {
+        saranKecilEl.innerHTML = '';
+      } else if (forceMarginUpdate || !fEceran.getAttribute('data-manual')) {
         fEceran.value = rekomendasiEceranKecil;
-        fEceran.setAttribute('data-auto', 'true');
+        saranKecilEl.innerHTML = '';
+      } else if (rekomendasiEceranKecil > 0 && parseFloat(fEceran.value) !== rekomendasiEceranKecil) {
+        saranKecilEl.innerHTML = `<span class="btn-saran" onclick="pakaiSaranHarga(${id}, 'kecil', ${rekomendasiEceranKecil})">💡 Saran Margin: Rp ${rekomendasiEceranKecil.toLocaleString('id-ID')}</span>`;
+      } else {
+        saranKecilEl.innerHTML = '';
       }
+
+      // Preview Stok Masuk
+      var previewText = `📦 Stok Masuk: ${totalKemasanUtama} ${satuanUtama}`;
+      if (pecahan > 1) {
+        previewText += ` (Total ${totalEceranKecil} ${labelPecahan} — 1 ${satuanUtama} isi ${pecahan} ${labelPecahan})`;
+      }
+      document.getElementById('previewStok-' + id).innerText = previewText;
 
       hitungTotalNota();
     }
@@ -338,14 +559,18 @@
         var namaBarang = document.getElementById('namaBarang-' + rawId).value.trim();
         
         if (namaBarang) {
+          var pecahanVal = parseFloat(document.getElementById('jenisPecahan-' + rawId).value) || 1;
           items.push({
+            kodeBarang: document.getElementById('kodeBarang-' + rawId).value.trim(),
             namaBarang: namaBarang,
             barcode: document.getElementById('barcode-' + rawId).value.trim(),
             hargaBeliTotal: parseFloat(document.getElementById('hargaBeliTotal-' + rawId).value) || 0,
+            satuanUtama: document.getElementById('namaKemasanUtama-' + rawId).value,
             totalKemasanUtama: parseFloat(document.getElementById('totalKemasanUtama-' + rawId).value) || 0,
             hppKemasanUtama: parseFloat(document.getElementById('hppKemasanUtama-' + rawId).value.replace(/\./g, '')) || 0,
             jualKemasanUtama: parseFloat(document.getElementById('jualKemasanUtama-' + rawId).value) || 0,
-            labelPecahan: document.getElementById('labelPecahan-' + rawId).value || 'Tidak Dipecah',
+            pecahan: pecahanVal,
+            labelPecahan: pecahanVal > 1 ? (document.getElementById('labelPecahan-' + rawId).value.trim() || 'Pcs') : 'Tidak Dipecah',
             totalEceranKecil: parseFloat(document.getElementById('totalEceranKecil-' + rawId).value) || 0,
             hppEceranKecil: parseFloat(document.getElementById('hppEceranKecil-' + rawId).value.replace(/\./g, '')) || 0,
             jualEceranKecil: parseFloat(document.getElementById('jualEceranKecil-' + rawId).value) || 0
@@ -357,33 +582,37 @@
 
       var btn = document.getElementById('btnSimpan');
       btn.disabled = true;
-      btn.innerText = '⌛ Menyimpan...';
+      btn.innerText = '⌛ Menyimpan & Memperbarui Stok...';
 
       fetch(scriptUrl, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ header: header, items: items })
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'kulakan', header: header, items: items })
       })
-      .then(function() {
-        alert('Data Nota Kulakan & Barcode berhasil dikirim ke Google Sheet!');
-        resetForm();
+      .then(function(res) { return res.json(); })
+      .then(function(res) {
+        if (res.result === 'success') {
+          alert('✅ ' + (res.message || 'Data Nota Kulakan berhasil disimpan & stok Master Barang telah diperbarui!'));
+          resetForm();
+          muatMasterBarang();
+        } else {
+          alert('❌ Gagal menyimpan: ' + (res.message || 'Terjadi kesalahan di server.'));
+        }
       })
       .catch(function(err) {
         console.error(err);
-        alert('Gagal mengirim data.');
+        alert('❌ Gagal terhubung ke Google Sheet. Pastikan URL Script benar & sudah Deploy versi terbaru.');
       })
       .finally(function() {
         btn.disabled = false;
-        btn.innerText = '☁️ Simpan ke Google Sheet';
+        btn.innerText = '☁️ Simpan Kulakan & Update Stok';
       });
     }
 
     function resetForm() {
       document.getElementById('notaForm').reset();
       document.getElementById('containerBarang').innerHTML = '';
-      var today = new Date().toISOString().split('T')[0];
-      document.getElementById('tglNota').value = today;
+      document.getElementById('tglNota').value = getTodayWIB();
       document.getElementById('noNota').value = 'NT-' + Date.now().toString().slice(-6);
       countBarang = 0;
       tambahBarang();
@@ -391,13 +620,14 @@
     }
 
     window.onload = function() {
-      var today = new Date().toISOString().split('T')[0];
-      document.getElementById('tglNota').value = today;
+      document.getElementById('tglNota').value = getTodayWIB();
       document.getElementById('noNota').value = 'NT-' + Date.now().toString().slice(-6);
       
       var scriptUrl = localStorage.getItem('gas_script_url');
       if (!scriptUrl) {
         alert('URL Database belum diisi! Silakan atur melalui Menu Utama.');
+      } else {
+        muatMasterBarang();
       }
 
       tambahBarang();
